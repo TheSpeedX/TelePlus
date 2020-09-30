@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script  src="https://code.jquery.com/jquery-3.5.1.min.js"  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="  crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous"> -->
+
+    
+    <!-- Material Theme -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/default.css">
+    <title> Home </title>
+</head>
+
+<body>
+  {% include "header.html" %}
+  <style type="text/css">
+  
+    .base-timer {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    .base-timer__svg {
+      transform: scaleX(-1);
+    }
+
+    .base-timer__circle {
+      fill: none;
+      stroke: none;
+    }
+
+    .base-timer__path-elapsed {
+      stroke-width: 7px;
+      stroke: grey;
+    }
+
+    .base-timer__path-remaining {
+      stroke-width: 7px;
+      stroke-linecap: round;
+      transform: rotate(90deg);
+      transform-origin: center;
+      transition: 1s linear all;
+      fill-rule: nonzero;
+      stroke: currentColor;
+    }
+
+    .base-timer__path-remaining.green {
+      color: rgb(65, 184, 131);
+    }
+
+    .base-timer__path-remaining.orange {
+      color: orange;
+    }
+
+    .base-timer__path-remaining.red {
+      color: red;
+    }
+
+    .base-timer__label {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+  </style>
+  <div class="container">
+    <div class="row" style="margin-top: 15%;"></div>
+
+    {% if type=="guest" %}
+    
+    <!-- Guest Account -->
+    
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel">
+          <span class="break-line">Hello, Welcome To Bot,</span>
+          <span class="break-line">Its Great To See You here.</span>
+          <span class="break-line">
+            Hold on with Your API ID and hash from <a href="https://my.telegram.org/apps">Telegram</a>
+          </span>
+          <br>
+          <br>
+          <br>
+          <span class="break-line">
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Add Account</a>      
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    {% elif type=="active" %}
+
+    <!-- While Adding -->
+    
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel">
+          <div id="app" style="width: 100px; float: left; font-size: 50px; text-align: center;">
+          </div>
+          <div style="padding-left: 20%; padding-bottom: 20px;">
+            <p>
+              {% if info.get("current_user") %}
+              <b>Member:</b> {{info.get("current_user")}} <br>
+              {% endif %}
+              {% if info.get("attached_name") %}
+              <b>Attached List:</b> {{info.get("attached_name")}} <br>
+              {% endif %}
+              {% if info.get("group") %}
+              <b>Adding To:</b> {{info.get("group")}} <br>
+              {% endif %}
+              {% if info.get("count") and info.get("total") %}
+              <b>Request Processed:</b> {{info.get("count")}} / {{info.get("count")}} <br>
+              {% endif %}
+
+              </p>
+          <a class="waves-effect waves-light btn" href="#!"><i class="material-icons left">cloud</i>Stop</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+
+      <!-- While Paused -->
+
+      <div class="row">
+      <div class="col s12" style="width: auto;">
+        <div class="card-panel">
+          <span>Scrap Members From Groups</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Scrap</a>      
+          </div>
+        </div>
+      </div>
+      <div class="col s12" style="width: auto;">
+        <div class="card-panel">
+          <span>Add members to Groups</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Add</a>      
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12" style="width: auto;">
+        <div class="card-panel">
+          <span>Split A Scrapped List</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Split</a>      
+          </div>
+        </div>
+      </div>
+      <div class="col s12" style="width: auto;">
+        <div class="card-panel">
+          <span>Global Settings</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Open</a>      
+          </div>
+        </div>
+      </div>
+    </div>
+  {%endif%}
+  </div>
+</body>
+  <script>
+  $(document).ready(function(){
+      $(".dropdown-trigger").dropdown();
+  });
+  </script>
+
+<script>
+  const FULL_DASH_ARRAY = 283;
+  const WARNING_THRESHOLD = 10;
+  const ALERT_THRESHOLD = 5;
+  
+  const COLOR_CODES = {
+    info: {
+      color: "green"
+    },
+    warning: {
+      color: "orange",
+      threshold: WARNING_THRESHOLD
+    },
+    alert: {
+      color: "red",
+      threshold: ALERT_THRESHOLD
+    }
+  };
+  var interval={{info.get("timestamp",0)}}-Math.floor(Date.now() / 1000);
+  const TIME_LIMIT = interval >5 ? interval: 5;
+  let timePassed = 0;
+  let timeLeft = TIME_LIMIT;
+  let timerInterval = null;
+  let remainingPathColor = COLOR_CODES.info.color;
+  
+  document.getElementById("app").innerHTML = `
+  <div class="base-timer">
+    <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <g class="base-timer__circle">
+        <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
+        <path
+          id="base-timer-path-remaining"
+          stroke-dasharray="283"
+          class="base-timer__path-remaining ${remainingPathColor}"
+          d="
+            M 50, 50
+            m -45, 0
+            a 45,45 0 1,0 90,0
+            a 45,45 0 1,0 -90,0
+          "
+        ></path>
+      </g>
+    </svg>
+    <span id="base-timer-label" class="base-timer__label">${formatTime(
+      timeLeft
+    )}</span>
+  </div>
+  `;
+  
+  startTimer();
+  
+  function onTimesUp() {
+    document.location.reload();
+    clearInterval(timerInterval);
+  }
+  
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timePassed = timePassed += 1;
+      timeLeft = TIME_LIMIT - timePassed;
+      document.getElementById("base-timer-label").innerHTML = formatTime(
+        timeLeft
+      );
+      setCircleDasharray();
+      setRemainingPathColor(timeLeft);
+  
+      if (timeLeft === 0) {
+        onTimesUp();
+      }
+    }, 1000);
+  }
+  
+  function formatTime(time) {
+    const minutes = Math.floor(time / 60);
+    let seconds = time % 60;
+  
+    if (seconds < 10) {
+      seconds = `0${seconds}`;
+    }
+  
+    return `${minutes}:${seconds}`;
+  }
+  
+  function setRemainingPathColor(timeLeft) {
+    const { alert, warning, info } = COLOR_CODES;
+    if (timeLeft <= alert.threshold) {
+      document
+        .getElementById("base-timer-path-remaining")
+        .classList.remove(warning.color);
+      document
+        .getElementById("base-timer-path-remaining")
+        .classList.add(alert.color);
+    } else if (timeLeft <= warning.threshold) {
+      document
+        .getElementById("base-timer-path-remaining")
+        .classList.remove(info.color);
+      document
+        .getElementById("base-timer-path-remaining")
+        .classList.add(warning.color);
+    }
+  }
+  
+  function calculateTimeFraction() {
+    const rawTimeFraction = timeLeft / TIME_LIMIT;
+    return rawTimeFraction - (1 / TIME_LIMIT) * (1 - rawTimeFraction);
+  }
+  
+  function setCircleDasharray() {
+    const circleDasharray = `${(
+      calculateTimeFraction() * FULL_DASH_ARRAY
+    ).toFixed(0)} 283`;
+    document
+      .getElementById("base-timer-path-remaining")
+      .setAttribute("stroke-dasharray", circleDasharray);
+  }
+  </script>
+</html>

@@ -1,0 +1,3 @@
+*.session
+data/
+__pycache__/

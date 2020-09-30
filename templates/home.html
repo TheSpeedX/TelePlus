@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<style>
+	body, html
+    {
+		margin: 0; padding: 0; height: 100%; overflow: hidden;
+		/*background-image: url("{{ url_for('static', filename='images/back.png') }}");*/
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1600 800'%3E%3Cg stroke='%233a6fa1' stroke-width='66.7' stroke-opacity='0.05' %3E%3Ccircle fill='%232d8991' cx='0' cy='0' r='1800'/%3E%3Ccircle fill='%23048794' cx='0' cy='0' r='1700'/%3E%3Ccircle fill='%23008498' cx='0' cy='0' r='1600'/%3E%3Ccircle fill='%2300819d' cx='0' cy='0' r='1500'/%3E%3Ccircle fill='%23007fa2' cx='0' cy='0' r='1400'/%3E%3Ccircle fill='%23007ca7' cx='0' cy='0' r='1300'/%3E%3Ccircle fill='%230078ac' cx='0' cy='0' r='1200'/%3E%3Ccircle fill='%230075b1' cx='0' cy='0' r='1100'/%3E%3Ccircle fill='%230071b5' cx='0' cy='0' r='1000'/%3E%3Ccircle fill='%23006dba' cx='0' cy='0' r='900'/%3E%3Ccircle fill='%230069be' cx='0' cy='0' r='800'/%3E%3Ccircle fill='%230064c1' cx='0' cy='0' r='700'/%3E%3Ccircle fill='%23005fc3' cx='0' cy='0' r='600'/%3E%3Ccircle fill='%23005ac4' cx='0' cy='0' r='500'/%3E%3Ccircle fill='%230053c4' cx='0' cy='0' r='400'/%3E%3Ccircle fill='%23004cc3' cx='0' cy='0' r='300'/%3E%3Ccircle fill='%230044c1' cx='0' cy='0' r='200'/%3E%3Ccircle fill='%230b3bbd' cx='0' cy='0' r='100'/%3E%3C/g%3E%3C/svg%3E");
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: cover;
+	}
+	iframe {
+		width: 100%;
+		height: 100%;
+		border: 0;
+		overflow: hidden;
+	}
+	.navbar{
+		background: #333;
+		color: #fff;
+	}
+  </style>
+
+  <meta charset="utf-8" />
+
+  <title>Home | HWS</title>
+</head>
+
+<body id="body">
+  <script>
+  function reloadFrame(url) {
+	if (url.includes("panel")){
+		if (sessionStorage.getItem("lastpanel") != null) 
+		url=sessionStorage.getItem("lastpanel");
+	}
+	if (String(document.getElementById('mainframe').src).includes(url)){
+		document.getElementById('mainframe').contentWindow.location.reload(true);
+	}
+	else{
+		document.getElementById('mainframe').src=url;
+	}
+ }
+  
+  function loadNavTab(url){
+	var navtab=String(url).split("/")[3];
+	var tabs=["panel","question","create-user","api"];
+	if (navtab==="login"){
+		window.location.href ="/login";
+		return;
+		}
+	for (i = 0; i < tabs.length; i++) {
+		var elem=document.getElementById(tabs[i]+'-tab');
+		if (!elem)
+			continue;
+		if (navtab===tabs[i])
+			elem.setAttribute("class", "nav-link active");
+		else
+			elem.setAttribute("class", "nav-link");
+	}
+  }
+  function logOut(){
+	if (!(sessionStorage.getItem("sessionEntries") == null || sessionStorage.getItem("sessionEntries") == 0)){
+		alert(`${sessionStorage.getItem("sessionEntries")} entries recorded in this session`)}
+		sessionStorage.removeItem("sessionEntries");
+		window.location.href="/logout";
+	}
+  
+  </script>
+  <nav class="navbar navbar-dark py-0  navbar-expand-lg py-md-0">
+     <div class="container">
+<ul class="nav navbar-nav">
+  
+  <li class="nav-item py-0" role="presentation">
+    <a class="nav-link active" id="panel-tab" data-toggle="tab" onclick="reloadFrame('/panel')" role="tab" aria-controls="panel" aria-selected="true">Questions Panel</a>
+  </li>
+  
+
+  <li class="nav-item py-0" role="presentation">
+    <a class="nav-link" id="question-tab" data-toggle="tab" onclick="reloadFrame('/question')" role="tab" aria-controls="question" aria-selected="false">Dashboard</a>
+  </li>
+
+  {% if user.level==0 %}
+  <li class="nav-item py-0" role="presentation">
+    <a class="nav-link" id="create-user-tab" data-toggle="tab" onclick="reloadFrame('/create-user')" role="tab" aria-controls="create-user" aria-selected="false">Add User</a>
+  </li>
+  {% elif user.level==3 %}
+  <li class="nav-item py-0" role="presentation">
+    <a class="nav-link" id="api-tab" data-toggle="tab" onclick="reloadFrame('/api')" role="tab" aria-controls="api" aria-selected="false">API Docs</a>
+  </li>
+  {% endif %}
+  
+ </ul>
+ <ul class="nav navbar-nav navbar-right">
+  <li class="nav-item py-0" role="presentation">
+    <a class="nav-link" id="logout-tab" data-toggle="tab" onclick="logOut()" role="tab" aria-controls="logout" aria-selected="false"><span class="fa fa-sign-out"></span>&nbsp;&nbsp;Log Out</a>
+  </li>
+</ul>
+</div>
+</nav>
+<iframe id="mainframe" src="/panel" onLoad="loadNavTab(this.contentWindow.location);">
+
+</iframe>
+</body>
+</html>

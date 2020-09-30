@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>Add Account</title>
+  <style media="screen">
+    body {
+      font-family: "Lato", sans-serif;
+    }
+    .container{
+      margin-top: 10%;
+    }
+
+  </style>
+</head>
+
+<body>
+  {% include "header.html" %}
+  
+  <div class="container">
+  {%if not data%}
+    {% set data=dict() %}
+  {% endif %}
+
+
+    {% set phone = data.get("phone") or "+91" %}
+    {% set api_id = data.get("api_id") or "" %}
+    {% set api_hash = data.get("api_hash") or "" %}
+
+  <div id="main-modal" class="modal  modal-fixed-footer">
+    <div class="modal-content">
+      <h4>Enter Code </h4>
+      <p>NOTE: You will receive login code in your Telegram Account</p>
+      <div class="input-field col s6">
+        <i class="material-icons prefix">create</i>
+        <input id="code_id" type="text" class="validate">
+        <label for="code_id" id="custom_code">Code</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button  class="waves-effect waves-light btn-large" onclick="auth()">
+        <i class="material-icons left">send</i>LOGIN</a>
+    </div>
+  </div>
+
+
+    <div class="row">
+      <div class="card-panel" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <div class="col s12">
+          <div class="row" style="width: max-content;">
+            <div class="input-field col s6">
+              <i class="material-icons prefix">phone</i>
+              <input id="phone_number" type="text" value="{{phone}}" pattern="^\+[0-9]{7,13}$" class="validate" required>
+              <label for="phone_number">Phone</label>
+            </div>
+          </div>
+          <div class="row" style="width: max-content;">
+            <div class="input-field col s6">
+              <i class="material-icons prefix">account_circle</i>
+              <input id="api_id" type="text"  pattern="^[0-9]{7}$" value="{{api_id}}" class="validate" data-length="7" required>
+              <label for="api_id">API ID</label>
+            </div>
+          </div>
+          <div class="row"style="width: max-content;">
+            <div class="input-field col s6">
+              <i class="material-icons prefix">fingerprint</i>
+              <input id="api_hash" type="text" pattern="^[a-z0-9]{32}$" value="{{api_hash}}" class="validate" data-length="32" required>
+              <label for="api_hash">API Hash</label>
+            </div>
+          </div>
+          <button  class="waves-effect waves-light btn-large" onclick='document.getElementById("code_id").value="";auth();'>
+            <i class="material-icons left">send</i> LOGIN</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+    
+    
+  $(document).ready(function(){
+    $('.modal').modal();
+    $('input#api_id, input#api_hash').characterCounter();
+  });
+  function auth(){
+    var phone=document.getElementById("phone_number").value.trim();
+    var api_id = document.getElementById("api_id").value.trim();
+    var api_hash = document.getElementById("api_hash").value.trim();
+    var code = document.getElementById("code_id").value.trim();
+    fetch("/adduser", {
+        method: "POST",
+        body: JSON.stringify({
+          "phone": phone ,
+		      "api_id": api_id,
+          "api_hash":api_hash,
+          "code": code.length ==0? null : code
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+      })
+      .then(
+        (response) => {
+          if (response.ok) {
+            return response;
+          } else {
+            var error = new Error(
+              "Error " + response.status + ": " + response.statusText
+            );
+            error.response = response;
+            throw error;
+          }
+        },
+        (error) => {
+          var errmess = new Error(error.message);
+          throw errmess;
+        }
+      )
+      .then((response) => response.json())
+      .then((jres) => {
+        console.log(jres);
+        if (jres["ask_code"])
+          showModal("code");
+        else if (jres["success"])
+        document.location.href="/";
+        else
+        alert(jres["message"]);
+      })
+      .catch((error) => alert(error));
+  }
+  function showModal(type)
+  {
+    if (type=="code"){
+      document.getElementById('custom_code').innerText="Code";
+    }
+    else{
+      document.getElementById('custom_code').innerText="Password";
+    }
+    var elem = document.getElementById('main-modal');
+    var instance = M.Modal.getInstance(elem);
+    instance.open();
+  }
+</script>
+</html>
