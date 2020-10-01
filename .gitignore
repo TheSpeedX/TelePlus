@@ -1,4 +1,6 @@
 *.session
-data/
+*.session-journal
+data/phone/*.*
+data/groups/*.*
 __pycache__/
 config.json

@@ -1,12 +1,18 @@
 
 from telethon.sync import TelegramClient as TClient
 from telethon.errors.rpcerrorlist import ApiIdInvalidError, PeerFloodError, UserPrivacyRestrictedError
+from telethon.tl.functions.messages import GetDialogsRequest
+from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser
 
 class TelegramClient:
+
+
     def __init__(self,api_id,api_hash,phone):
         self.api_id=api_id
         self.api_hash=api_hash
         self.phone=phone
+        self.groups=[]
+        self.groups_title=[]
         self.client=TClient(self.phone, self.api_id, self.api_hash)
         
     
@@ -25,6 +31,24 @@ class TelegramClient:
                 return None
         return True
 
+    async def list_groups(self):
+        chunk_size=200
+        
+        result = self.client(GetDialogsRequest(
+                offset_date=None,
+                offset_id=0,
+                offset_peer=InputPeerEmpty(),
+                limit=chunk_size,
+                hash = 0
+            ))
+        chats = result.chats
+        for chat in chats:
+            try:
+                self.groups.append(chat)
+                self.groups_title.append(chat.title)
+            except:
+                continue
+        return len(self.groups)==len(self.groups_title)
     def scrap(self):
         """
 def list_users_in_group():
@@ -136,3 +160,17 @@ class ClientStore:
         return [client.todict() for client in self.client_store]
     def __str__(self):
         return str([str(client) for client in self.client_store])
+
+class GroupStore:
+
+
+    def __init__(self):
+        self.group_store={}
+    
+    def add(self,phone,groups):
+        self.group_store[str(phone)]=groups
+    
+    def get(self,index):
+        return list(self.group_store.items())[index]
+    
+    

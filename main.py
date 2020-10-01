@@ -1,7 +1,7 @@
 import json
 import os
 from quart import Quart, render_template, request, jsonify, make_response,redirect,url_for,session
-from TelegramClient import ClientStore,TelegramClient
+from TelegramClient import ClientStore, TelegramClient, GroupStore
 from datetime import datetime
 
 app = Quart(__name__)
@@ -9,6 +9,7 @@ app = Quart(__name__)
 SETTINGS = json.load(open("settings.json"))
 
 client_store = ClientStore()
+group_store = GroupStore()
 
 for config in json.load(open(SETTINGS.get("config_path"))):
     client_store.add(TelegramClient(**config))
@@ -89,6 +90,13 @@ async def change_number(api_id):
     session["current"] = client_store.get(api_id=api_id).todict()
     session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return session["current"]
+
+@app.route('/list/<phone_number>')
+async def list_groups(phone_number):
+    client = client_store.get(phonne=phone_number)
+    if len(client.groups)==0:
+        await client.list_groups()
+    return client.groups_title
 
 if __name__ == '__main__':
     app.secret_key = "MySecretKey1234"
