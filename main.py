@@ -36,6 +36,11 @@ async def choose_group():
     if request.method == "GET":
         return await render_template("selection.html", groups={'name': 2, 'name2': 1}, flag=True)
 
+@app.route('/settings', methods=['GET', 'POST'])
+async def change_settings():
+    if request.method == "GET":
+        return await render_template("settings.html", settings={'delay': 20, "config_path": "config.json"})
+
 @app.route('/')
 async def home():
     # print("CONFIG: ",client_store.toconfig())
