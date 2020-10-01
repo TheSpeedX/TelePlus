@@ -29,7 +29,7 @@ async def before_first_request_func():
     session["config"]=client_store.toconfig()
     if session["config"]:
         session["current"] = session.get("config")[0]
-        session["phone"]= json.load(open(os.path.join("data",session["current"]["phone"]+".json")))
+        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
 
 @app.route('/')
 async def home():
