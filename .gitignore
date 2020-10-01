@@ -1,3 +1,4 @@
 *.session
 data/
 __pycache__/
+config.json

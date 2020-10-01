@@ -17,6 +17,13 @@ def save_config():
     with open(SETTINGS.get("config_path"),"w") as config_file:
         json.dump(client_store.toconfig(),config_file,indent=4)
 
+def build_phone_path(phone):
+    return os.path.join("data","phone",phone+".json")
+
+def build_group_path(group):
+    return os.path.join("data","phone",group+".json")
+
+
 @app.before_first_request
 async def before_first_request_func():
     session["config"]=client_store.toconfig()
@@ -53,7 +60,7 @@ async def login():
         else:
             flag=await new_client.auth()
         if flag==True:
-            with open(os.path.join("data",new_client.phone+".json"),"w") as acc_config:
+            with open(build_phone_path(new_client.phone),"w") as acc_config:
                 json.dump(dict(status=False,attached_name="",count=0,total=0,current_user="",group="",timestamp=datetime.now().timestamp()),acc_config,indent=4)
             client_store.add(new_client)
             session["config"]=client_store.toconfig()
@@ -73,16 +80,16 @@ async def logout():
     save_config()
     if session["config"]:
         session["current"] = session.get("config")[0]
-        session["phone"]= json.load(open(os.path.join("data",session["current"]["phone"]+".json")))
+        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return redirect("/")
     
     
 @app.route('/change/<api_id>')
 async def change_number(api_id):
     session["current"] = client_store.get(api_id=api_id).todict()
-    session["phone"]= json.load(open(os.path.join("data",session["current"]["phone"]+".json")))
+    session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return session["current"]
 
 if __name__ == '__main__':
     app.secret_key = "MySecretKey1234"
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=SETTINGS.get("port",5000),debug=True)
