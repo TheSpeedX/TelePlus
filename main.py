@@ -31,6 +31,11 @@ async def before_first_request_func():
         session["current"] = session.get("config")[0]
         session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
 
+@app.route('/choose', methods=['GET', 'POST'])
+async def choose_group():
+    if request.method == "GET":
+        return await render_template("selection.html", groups={'name': 2, 'name2': 1}, flag=True)
+
 @app.route('/')
 async def home():
     # print("CONFIG: ",client_store.toconfig())
