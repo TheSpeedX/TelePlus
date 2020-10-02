@@ -9,23 +9,61 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <title>Settings</title>
+	<title>Settings</title>
+	<style type="text/css">
+	
+		.materialert{
+			position: relative;
+			min-width: 150px;
+			padding: 15px;
+			margin-bottom: 20px;
+			margin-top: 15px;
+			border: 1px solid transparent;
+			border-radius: 4px;
+			transition: all 0.1s linear;
+			webkit-box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
+			box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
+			display: -webkit-box;
+			display: -webkit-flex;
+			display: -ms-flexbox;
+			display: flex;
+			-webkit-box-align: center;
+			-webkit-align-items: center;
+			-ms-flex-align: center;
+			align-items: center;
+		}
+		.materialert.warning{
+			background-color: #f7cb5e;
+			color: #881818;
+			
+		}
+	</style>
 </head>
 <body>
 	{% include 'header.html' %}
 	<div style="width: 60%; text-align: center; margin: 0 auto; margin-top: 5rem;">
 		<h4>Settings</h4>
-		<form style="margin-top: 2rem;" method="post" id="uSettings">
-		</form>
+		<div class="materialert warning">
+		    <div class="material-icons">warning</div>
+		    Change settings with caution.
+		</div>
+		<!-- <div class="card-panel yellow lighten-2"></div> -->
+		<div class="container" style="margin-top: 2rem;" id="settings">
+			<table id="uSettings" class="responsive-table">
+
+			</table>
+			<br><button class="btn btn-primary" type="button" onclick="saveData()">SAVE</button>
+		</div>
 	</div>
 	<script type="text/javascript">
 		var _element = document.getElementById('uSettings');
 		_element.innerHTML = '';
-		var _settings = {{ settings|safe }};
+		
+		const _settings = {{ settings|safe }};
 		for(config in _settings){
+			var indiv = document.createElement('tr');
+			indiv.setAttribute("style","border-bottom:0px")
 			var temp = document.createElement('input');
-			var temp2 = document.createElement('label');
-			temp2.innerHTML = config;
 			if (typeof _settings[config] == 'number'){
 				temp.type = 'number';
 			}
@@ -34,11 +72,61 @@
 			}
 			temp.name = config;
 			temp.setAttribute('value', _settings[config]);
-			_element.appendChild(temp2);
-			_element.appendChild(temp);
-			_element.innerHTML += "<br>";
+			temp.setAttribute('onchange', "update('"+config+"')");
+			temp.setAttribute('id', config);
+			var col1=document.createElement("td");
+			col1.innerHTML=config;
+			var col2=document.createElement("td");
+			col2.appendChild(temp);
+			indiv.appendChild(col1);
+			indiv.appendChild(col2);
+			_element.appendChild(indiv);
 		}
-		_element.innerHTML += '<br><button class="btn btn-primary" type="submit">SUBMIT</button>';
+		function update(field){
+			if (typeof _settings[field] == 'number'){
+				_settings[field]=parseInt(document.getElementById(field).value.trim());
+			}
+			else {
+				_settings[field]=document.getElementById(field).value.trim();
+			}
+		}
+		function saveData(){
+			
+			fetch("/settings", {
+				method: "POST",
+				body: JSON.stringify(_settings),
+				headers: {
+				"Content-Type": "application/json",
+				},
+				credentials: "same-origin",
+			})
+			.then(
+				(response) => {
+				if (response.ok) {
+					return response;
+				} else {
+					var error = new Error(
+					"Error " + response.status + ": " + response.statusText
+					);
+					error.response = response;
+					throw error;
+				}
+				},
+				(error) => {
+				var errmess = new Error(error.message);
+				throw errmess;
+				}
+			)
+			.then((response) => response.json())
+			.then((jres) => {
+				if (jres["success"])
+				M.toast({html: 'Saved Successfully !'});
+				else
+				M.toast({html: 'Error !!'});
+			})
+			.catch((error) => 
+				M.toast({html: error}));
+		}
 	</script>
 </body>
 </html>

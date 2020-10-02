@@ -9,10 +9,14 @@ app = Quart(__name__)
 SETTINGS = json.load(open("settings.json"))
 
 client_store = ClientStore()
-group_store = GroupStore()
+# group_store = GroupStore()
 
 for config in json.load(open(SETTINGS.get("config_path"))):
     client_store.add(TelegramClient(**config))
+
+def save_settings():
+    with open("settings.json","w") as setting_file:
+        json.dump(SETTINGS,setting_file,indent=4)
 
 def save_config():
     with open(SETTINGS.get("config_path"),"w") as config_file:
@@ -32,15 +36,17 @@ async def before_first_request_func():
         session["current"] = session.get("config")[0]
         session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
 
-@app.route('/choose', methods=['GET', 'POST'])
-async def choose_group():
-    if request.method == "GET":
-        return await render_template("selection.html", groups={'name': 2, 'name2': 1}, flag=True)
 
 @app.route('/settings', methods=['GET', 'POST'])
 async def change_settings():
     if request.method == "GET":
-        return await render_template("settings.html", settings={'delay': 20, "config_path": "config.json"})
+        return await render_template("settings.html", settings=SETTINGS)
+    else:        
+        data=await request.get_json()
+        SETTINGS.update(data)
+        save_settings()
+        return {"success":True}
+
 
 @app.route('/')
 async def home():
@@ -61,11 +67,11 @@ async def login():
         return await render_template("login.html")
     else:
         data=await request.get_json()
-        # print("DATA: ",data)
+
         if client_store.get(phone=data["phone"]):
             return {"success":False,"ask_code":False,"message":"Account Already Exists"}
         new_client = TelegramClient(data["api_id"],data["api_hash"],data["phone"])
-        print("NEW Session: ",new_client)
+
         if data.get("code"):
             flag=await new_client.auth(code=data["code"],phone_code=session["phone_code_hash"])
         else:
@@ -101,12 +107,12 @@ async def change_number(api_id):
     session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return session["current"]
 
-@app.route('/list/<phone_number>')
-async def list_groups(phone_number):
-    client = client_store.get(phonne=phone_number)
+@app.route('/list')
+async def list_groups():
+    client = client_store.get(phone=session["current"]["phone"])
     if len(client.groups)==0:
         await client.list_groups()
-    return client.groups_title
+    return await render_template("selection.html",flag=False,groups=client.groups_title)
 
 if __name__ == '__main__':
     app.secret_key = "MySecretKey1234"
