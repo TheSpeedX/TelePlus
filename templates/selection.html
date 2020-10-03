@@ -13,7 +13,7 @@
 </head>
 <body>
 	{% include 'header.html' %}
-	<div style="width: 60%; text-align: center; margin: 0 auto; margin-top: 5rem;">
+	<div class="container" style="text-align: center; margin: 0 auto; margin-top: 5rem;">
 		<h4>Choose Group</h4>
 		<form style="margin-top: 2rem;" method="post">
 			{% if flag %}
@@ -32,12 +32,53 @@
 			<select id="gName" style="display: block;" name="name" required>
 				<option disabled selected>Choose your option</option>
 				{% for gname in groups %}
-				<option value="{{ gname }}">{{ gname }}</option>
+				<option value="{{ loop.index }}">{{ gname }}</option>
 				{% endfor %}
 			</select>
 			<br>
 			{% endif %}
 			<button class="btn btn-primary" type="submit">GO</button>
+			  <div class="preloader-wrapper big active" style="display:none;">
+				<div class="spinner-layer spinner-blue">
+				  <div class="circle-clipper left">
+					<div class="circle"></div>
+				  </div><div class="gap-patch">
+					<div class="circle"></div>
+				  </div><div class="circle-clipper right">
+					<div class="circle"></div>
+				  </div>
+				</div>
+		  
+				<div class="spinner-layer spinner-red" id="progress-bar" style="display: none;">
+				  <div class="circle-clipper left">
+					<div class="circle"></div>
+				  </div><div class="gap-patch">
+					<div class="circle"></div>
+				  </div><div class="circle-clipper right">
+					<div class="circle"></div>
+				  </div>
+				</div>
+		  
+				<div class="spinner-layer spinner-yellow">
+				  <div class="circle-clipper left">
+					<div class="circle"></div>
+				  </div><div class="gap-patch">
+					<div class="circle"></div>
+				  </div><div class="circle-clipper right">
+					<div class="circle"></div>
+				  </div>
+				</div>
+		  
+				<div class="spinner-layer spinner-green">
+				  <div class="circle-clipper left">
+					<div class="circle"></div>
+				  </div><div class="gap-patch">
+					<div class="circle"></div>
+				  </div><div class="circle-clipper right">
+					<div class="circle"></div>
+				  </div>
+				</div>
+			  </div>
 		</form>
 	</div>
 	<script type="text/javascript">

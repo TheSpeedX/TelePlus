@@ -4,8 +4,20 @@ from telethon.errors.rpcerrorlist import ApiIdInvalidError, PeerFloodError, User
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser
 
-class TelegramClient:
+import re
+import os
+import json
 
+def build_group_path(group):
+    group=re.sub("[^a-zA-Z0-9]","-",group)
+    return os.path.join("data","phone",group+".json")
+
+
+def save_group(group,data):
+    with open(build_group_path(group),"w",encoding='UTF-8') as config_file:
+        json.dump(data,config_file,indent=4)
+
+class TelegramClient:
 
     def __init__(self,api_id,api_hash,phone):
         self.api_id=api_id
@@ -34,7 +46,7 @@ class TelegramClient:
     async def list_groups(self):
         chunk_size=200
         
-        result = self.client(GetDialogsRequest(
+        result = await self.client(GetDialogsRequest(
                 offset_date=None,
                 offset_id=0,
                 offset_peer=InputPeerEmpty(),
@@ -49,66 +61,24 @@ class TelegramClient:
             except:
                 continue
         return len(self.groups)==len(self.groups_title)
-    def scrap(self):
-        """
-def list_users_in_group():
-    chats = []
-    last_date = None
-    chunk_size = 200
-    groups=[]
-    
-    result = client(GetDialogsRequest(
-                offset_date=last_date,
-                offset_id=0,
-                offset_peer=InputPeerEmpty(),
-                limit=chunk_size,
-                hash = 0
-            ))
-    chats.extend(result.chats)
-    
-    for chat in chats:
-        try:
-            print(chat)
-            groups.append(chat)
-        except:
-            continue
-    
-    print('Choose a group to scrape members from:')
-    i=0
-    for g in groups:
-        print(str(i) + '- ' + g.title)
-        i+=1
-    
-    g_index = input("Enter a Number: ")
-    target_group=groups[int(g_index)]
 
-    print('\n\nGropu Title:\t' + groups[int(g_index)].title)
-    
-    print('Fetching Members...')
-    all_participants = []
-    all_participants = client.get_participants(target_group, aggressive=True)
-    
-    print('Saving In file...')
-    with open("members-" + re.sub("-+","-",re.sub("[^a-zA-Z]","-",str.lower(target_group.title))) + ".csv","w",encoding='UTF-8') as f:
-        writer = csv.writer(f,delimiter=",",lineterminator="\n")
-        writer.writerow(['username','user id', 'access hash','name','group', 'group id'])
+
+    def scrap(self,index):
+        target_group=self.groups[index]
+        all_participants = []
+        all_participants = client.get_participants(target_group, aggressive=True)
+
+        group_data=dict(name=target_group.title,id=target_group.id)
+        final_data=[]
         for user in all_participants:
-            if user.username:
-                username= user.username
-            else:
-                username= ""
-            if user.first_name:
-                first_name= user.first_name
-            else:
-                first_name= ""
-            if user.last_name:
-                last_name= user.last_name
-            else:
-                last_name= ""
+            username = user.username if user.username else ""
+            first_name = user.first_name if user.first_name else ""
+            last_name = user.last_name if user.last_name else ""
             name= (first_name + ' ' + last_name).strip()
-            writer.writerow([username,user.id,user.access_hash,name,target_group.title, target_group.id])      
-    print('Members scraped successfully.')"""
-        pass
+            final_data.append(dict(username=username,name=name,id=user.id,access_hash=user.access_hash))
+        group_data["members"]=[final_data]
+        save_group((target_group.title+"-"+target_group.id),group_data)
+        return group_data
 
     def add(self):
         pass
@@ -125,15 +95,12 @@ class ClientStore:
     def __init__(self):
         self.client_store=[]
     
-    def add(self,telegram_client):
-        self.client_store.append(telegram_client)
     
     def pop(self,index=None):
         if index:
             return self.client_store.pop(index)
         else:
             return self.client_store.pop()
-    
     def get(self,**kwargs):
         for i,client in enumerate(self.client_store):
             flag=True
@@ -144,6 +111,12 @@ class ClientStore:
             if flag:
                 return client
         return None
+    
+    def add(self,telegram_client):
+        index = self.get_index(phone=telegram_client.phone)
+        if not index==-1:
+            self.pop(index)
+        self.client_store.append(telegram_client)
 
     def get_index(self,**kwargs):
         for i,client in enumerate(self.client_store):

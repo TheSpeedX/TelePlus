@@ -22,11 +22,13 @@ def save_config():
     with open(SETTINGS.get("config_path"),"w") as config_file:
         json.dump(client_store.toconfig(),config_file,indent=4)
 
+def save_phone():
+    with open(build_phone_path(session["current"]["phone"]),"w") as config_file:
+        json.dump(session["phone"],config_file,indent=4)
+
 def build_phone_path(phone):
     return os.path.join("data","phone",phone+".json")
 
-def build_group_path(group):
-    return os.path.join("data","phone",group+".json")
 
 
 @app.before_first_request
@@ -36,16 +38,6 @@ async def before_first_request_func():
         session["current"] = session.get("config")[0]
         session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
 
-
-@app.route('/settings', methods=['GET', 'POST'])
-async def change_settings():
-    if request.method == "GET":
-        return await render_template("settings.html", settings=SETTINGS)
-    else:        
-        data=await request.get_json()
-        SETTINGS.update(data)
-        save_settings()
-        return {"success":True}
 
 
 @app.route('/')
@@ -78,7 +70,7 @@ async def login():
             flag=await new_client.auth()
         if flag==True:
             with open(build_phone_path(new_client.phone),"w") as acc_config:
-                json.dump(dict(status=False,attached_name="",count=0,total=0,current_user="",group="",timestamp=datetime.now().timestamp()),acc_config,indent=4)
+                json.dump(dict(status=False,attached_name="",count=0,total=0,current_user="",timestamp=datetime.now().timestamp()),acc_config,indent=4)
             client_store.add(new_client)
             session["config"]=client_store.toconfig()
             await change_number(data["api_id"])
@@ -89,6 +81,18 @@ async def login():
         else:
             session["phone_code_hash"]=flag.phone_code_hash
             return {"success":False,"ask_code":True,"message":"Enter Code"}
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+async def change_settings():
+    if request.method == "GET":
+        return await render_template("settings.html", settings=SETTINGS)
+    else:        
+        data=await request.get_json()
+        SETTINGS.update(data)
+        save_settings()
+        return {"success":True}
+
 
 @app.route('/logout')
 async def logout():
@@ -107,12 +111,25 @@ async def change_number(api_id):
     session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return session["current"]
 
+@app.route("/scrap/<int:index>")
+async def scrap_group(index):
+    client = client_store.get(phone=session["current"]["phone"])
+    if index<len(client.groups):
+        data = client.scrap(index)
+        return {"success":True,"members":len(data["members"])}
+    return {"success":False}
+
+
 @app.route('/list')
 async def list_groups():
     client = client_store.get(phone=session["current"]["phone"])
-    if len(client.groups)==0:
-        await client.list_groups()
-    return await render_template("selection.html",flag=False,groups=client.groups_title)
+    flag = await client.auth()
+    if flag:
+        if len(client.groups)==0:
+            await client.list_groups()
+        return await render_template("listing.html",flag=False,groups=client.groups_title)
+    else:
+        return await render_template("login.html",data=client.todict())
 
 if __name__ == '__main__':
     app.secret_key = "MySecretKey1234"
