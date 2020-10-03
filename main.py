@@ -93,6 +93,10 @@ async def change_settings():
         save_settings()
         return {"success":True}
 
+@app.route('/splitter'):
+async def splitter():
+    if request.method == "GET":
+        return await render_template("splitter.html", groups={'name': 2, 'name2': 1})
 
 @app.route('/logout')
 async def logout():
