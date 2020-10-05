@@ -1,5 +1,5 @@
 
-from telethon.sync import TelegramClient as TClient
+from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import ApiIdInvalidError, PeerFloodError, UserPrivacyRestrictedError
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser
@@ -7,45 +7,55 @@ from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser
 import re
 import os
 import json
+from datetime import datetime
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('telethon').setLevel(level=logging.DEBUG)
 
 def build_group_path(group):
     group=re.sub("[^a-zA-Z0-9]","-",group)
-    return os.path.join("data","phone",group+".json")
+    return os.path.join("data","groups",group+".json")
 
 
 def save_group(group,data):
     with open(build_group_path(group),"w",encoding='UTF-8') as config_file:
         json.dump(data,config_file,indent=4)
 
-class TelegramClient:
+class TGClient:
 
-    def __init__(self,api_id,api_hash,phone):
+    def __init__(self,loop,api_id,api_hash,phone):
         self.api_id=api_id
         self.api_hash=api_hash
         self.phone=phone
         self.groups=[]
         self.groups_title=[]
-        self.client=TClient(self.phone, self.api_id, self.api_hash)
+        self.auth_check=None
+        self.client=TelegramClient(self.phone, self.api_id, self.api_hash, loop=loop)
         
-    
     async def auth(self,code=None,phone_code=None):
+        print("before connection")
         await self.client.connect()
+        if self.auth_check:
+            if (datetime.now()-self.auth_check).seconds<600:
+                return True
         if code:
             await self.client.sign_in(self.phone,code,phone_code_hash=phone_code)
-        # else:
-        #     self.client = TClient(self.phone, self.api_id, self.api_hash)
-        #     await self.client.connect()
+        print("on connection")
         flag = await self.client.is_user_authorized()
+        
         if not flag:
             try:
                 return await self.client.send_code_request(self.phone)
             except ApiIdInvalidError:
                 return None
+        print("after connection")
+        self.auth_check=datetime.now()
         return True
 
     async def list_groups(self):
         chunk_size=200
-        
+        print("Started Listing...")
         result = await self.client(GetDialogsRequest(
                 offset_date=None,
                 offset_id=0,
@@ -56,17 +66,18 @@ class TelegramClient:
         chats = result.chats
         for chat in chats:
             try:
-                self.groups.append(chat)
-                self.groups_title.append(chat.title)
+                if chat.megagroup:
+                    self.groups.append(chat)
+                    self.groups_title.append(chat.title)
             except:
                 continue
         return len(self.groups)==len(self.groups_title)
 
 
-    def scrap(self,index):
+    async def scrap(self,index):
         target_group=self.groups[index]
         all_participants = []
-        all_participants = client.get_participants(target_group, aggressive=True)
+        all_participants = await self.client.get_participants(target_group)
 
         group_data=dict(name=target_group.title,id=target_group.id)
         final_data=[]
@@ -77,7 +88,7 @@ class TelegramClient:
             name= (first_name + ' ' + last_name).strip()
             final_data.append(dict(username=username,name=name,id=user.id,access_hash=user.access_hash))
         group_data["members"]=[final_data]
-        save_group((target_group.title+"-"+target_group.id),group_data)
+        save_group((target_group.title+"-"+str(target_group.id)),group_data)
         return group_data
 
     def add(self):
@@ -134,16 +145,4 @@ class ClientStore:
     def __str__(self):
         return str([str(client) for client in self.client_store])
 
-class GroupStore:
-
-
-    def __init__(self):
-        self.group_store={}
-    
-    def add(self,phone,groups):
-        self.group_store[str(phone)]=groups
-    
-    def get(self,index):
-        return list(self.group_store.items())[index]
-    
     

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script  src="https://code.jquery.com/jquery-3.5.1.min.js"  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="  crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <title>Choose Group</title>
+</head>
+<body>
+	{% include 'header.html' %}
+	<div class="container" style="text-align: center; margin: 0 auto; margin-top: 5rem;">
+		<h4>Choose Group</h4>
+		<form style="margin-top: 2rem;">
+			<select id="gName" style="display: block;" name="name" onchange="toggle_input()" required>
+				<option disabled selected>Choose your option</option>
+				{% for group in groups %}
+				<option value="{{ group['id'] }}">{{ group['name'] }}</option>
+				{% endfor %}
+			</select>
+
+			<br>
+			<br>
+			<div style="display: none;" id="iNum_div">
+				<input type="number" min="1" name="n" id="iNum">
+				<br><br>
+				<label>
+					<input id="iMsg" type="checkbox" class="filled-in" onchange="toggle_msg();"/>
+					<span id="iMsg2">Split into 'n' member each</span>
+				</label>
+				<br><br>
+			</div>
+			<div class="preloader-wrapper big active"  id="progress-bar" style="display:none;">
+			<div class="spinner-layer spinner-blue">
+				<div class="circle-clipper left">
+				<div class="circle"></div>
+				</div><div class="gap-patch">
+				<div class="circle"></div>
+				</div><div class="circle-clipper right">
+				<div class="circle"></div>
+				</div>
+			</div>
+		
+			<div class="spinner-layer spinner-red">
+				<div class="circle-clipper left">
+				<div class="circle"></div>
+				</div><div class="gap-patch">
+				<div class="circle"></div>
+				</div><div class="circle-clipper right">
+				<div class="circle"></div>
+				</div>
+			</div>
+		
+			<div class="spinner-layer spinner-yellow">
+				<div class="circle-clipper left">
+				<div class="circle"></div>
+				</div><div class="gap-patch">
+				<div class="circle"></div>
+				</div><div class="circle-clipper right">
+				<div class="circle"></div>
+				</div>
+			</div>
+		
+			<div class="spinner-layer spinner-green">
+				<div class="circle-clipper left">
+				<div class="circle"></div>
+				</div><div class="gap-patch">
+				<div class="circle"></div>
+				</div><div class="circle-clipper right">
+				<div class="circle"></div>
+				</div>
+			</div>
+			</div>
+			
+			<br>
+			<br>
+			<button class="btn btn-primary" type="button" id="submit" onclick="split()">START</button>
+		</form>
+	</div>
+	<script type="text/javascript">
+		function toggle_input() {
+			var _element = document.getElementById('iNum_div');
+			var _element2 = document.getElementById('iNum');
+			var _element3 = document.getElementById('gName');
+			
+			var _group = {{ groups|safe }};
+			_element.setAttribute('style', "display: block;");
+			_element2.setAttribute('max', String(_group[_element3.selectedIndex-1].count));
+			_element2.setAttribute('placeholder', "(Maximum "+ String(_group[_element3.selectedIndex-1].count) +")");
+		};
+	</script>
+	<script type="text/javascript">
+		function toggle_msg() {
+			var _element = document.getElementById('iMsg');
+			var _element2 = document.getElementById('iMsg2');
+			if (_element.checked) {
+				_element2.innerHTML = "Total to 'n' parts";
+			}
+			else {
+				_element2.innerHTML = "Split into 'n' member each";
+			}
+		};
+	</script>
+	<script type="text/javascript">
+
+	const bar = document.getElementById('progress-bar');
+
+	$(document).ready(function(){
+		$(function() {
+	$('#submit').click(function(e) {
+			e.preventDefault();
+			bar.style.display='inline-block';
+		});
+	});
+	});
+	
+		function split(){
+			var e = document.getElementById('gName');
+			var ind = e.options[e.selectedIndex].value;
+			var parts = parseInt(document.getElementById("iNum").value.trim());
+			var splitByTotal = document.getElementById("iMsg").checked;
+			M.toast({html: 'Started Splitting '+e.options[e.selectedIndex].text});
+
+			fetch("/split/"+String(ind), {
+				method: "POST",
+				body: JSON.stringify({"parts":parts,
+									  "total_parts":splitByTotal}),
+				headers: {
+				"Content-Type": "application/json",
+				},
+				credentials: "same-origin",
+			})
+			.then(
+				(response) => {
+				if (response.ok) {
+					return response;
+				} else {
+					var error = new Error(
+					"Error " + response.status + ": " + response.statusText
+					);
+					error.response = response;
+					throw error;
+				}
+				},
+				(error) => {
+				var errmess = new Error(error.message);
+				throw errmess;
+				}
+			)
+			.then((response) => response.json())
+			.then((jres) => {
+				if (jres["success"])
+				M.toast({html: ' Splitted into '+jres["members"]+ ' parts Successfully !'});
+				else
+				M.toast({html: 'Error Occurred !!'});
+				bar.style.display="none";
+			})
+			.catch((error) => {
+				M.toast({html: error});
+				bar.style.display="none";
+			});
+			
+		};
+	</script>
+</body>
+</html>
