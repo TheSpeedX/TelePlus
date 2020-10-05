@@ -1,18 +1,25 @@
 import json
 import os
 from quart import Quart, render_template, request, jsonify, make_response,redirect,url_for,session
-from TelegramClient import ClientStore, TelegramClient, GroupStore
+from TGClient import ClientStore, TGClient
+from TGGroup import GroupStore
 from datetime import datetime
+import asyncio
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = Quart(__name__)
 
 SETTINGS = json.load(open("settings.json"))
 
 client_store = ClientStore()
-# group_store = GroupStore()
+group_store = GroupStore()
+group_store.load()
+loop = asyncio.get_event_loop()
 
 for config in json.load(open(SETTINGS.get("config_path"))):
-    client_store.add(TelegramClient(**config))
+    client_store.add(TGClient(loop,**config))
 
 def save_settings():
     with open("settings.json","w") as setting_file:
@@ -60,9 +67,9 @@ async def login():
     else:
         data=await request.get_json()
 
-        if client_store.get(phone=data["phone"]):
-            return {"success":False,"ask_code":False,"message":"Account Already Exists"}
-        new_client = TelegramClient(data["api_id"],data["api_hash"],data["phone"])
+        # if client_store.get(phone=data["phone"]):
+        #     return {"success":False,"ask_code":False,"message":"Account Already Exists"}
+        new_client = TGClient(loop,data["api_id"],data["api_hash"],data["phone"])
 
         if data.get("code"):
             flag=await new_client.auth(code=data["code"],phone_code=session["phone_code_hash"])
@@ -87,7 +94,7 @@ async def login():
 async def change_settings():
     if request.method == "GET":
         return await render_template("settings.html", settings=SETTINGS)
-    else:        
+    else:
         data=await request.get_json()
         SETTINGS.update(data)
         save_settings()
@@ -115,14 +122,29 @@ async def change_number(api_id):
 async def scrap_group(index):
     client = client_store.get(phone=session["current"]["phone"])
     if index<len(client.groups):
-        data = client.scrap(index)
-        return {"success":True,"members":len(data["members"])}
+        data = await client.scrap(index)
+        return {"success":True,"members":len(data["members"][0])}
     return {"success":False}
 
+@app.route("/split/<int:id>",methods=["POST"])
+async def split_group(id):
+    group = group_store.get(id=id)
+    data=await request.get_json()
+    if group:
+        members = group.split(data["parts"],total_split=data["total_parts"])
+        return {"success":True,"members":len(members)}
+    return {"success":False}
+
+
+@app.route("/split")
+async def split_view():
+    print(group_store)
+    return await render_template("splitter.html",groups=group_store.toconfig())
 
 @app.route('/list')
 async def list_groups():
     client = client_store.get(phone=session["current"]["phone"])
+    # print(client)
     flag = await client.auth()
     if flag:
         if len(client.groups)==0:
@@ -131,6 +153,7 @@ async def list_groups():
     else:
         return await render_template("login.html",data=client.todict())
 
+
 if __name__ == '__main__':
     app.secret_key = "MySecretKey1234"
-    app.run(host="0.0.0.0",port=SETTINGS.get("port",5000),debug=True)
+    app.run(host="0.0.0.0",port=SETTINGS.get("port",5000),debug=True,loop=loop)

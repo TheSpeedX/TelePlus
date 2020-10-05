@@ -19,14 +19,13 @@
 			<select id="gName" style="display: block;" name="name" required>
 				<option disabled selected>Choose your option</option>
 				{% for gname in groups %}
-				<option value="{{ loop.index }}">{{ gname }}</option>
+				<option value="{{ loop.index0 }}">{{ gname }}</option>
 				{% endfor %}
 			</select>
+
 			<br>
-			<button class="btn btn-primary" type="button">GO</button>
 
-
-			<div class="preloader-wrapper big active" style="display:none;">
+			<div class="preloader-wrapper big active"  id="progress-bar" style="display:none;">
 			<div class="spinner-layer spinner-blue">
 				<div class="circle-clipper left">
 				<div class="circle"></div>
@@ -37,7 +36,7 @@
 				</div>
 			</div>
 		
-			<div class="spinner-layer spinner-red" id="progress-bar" style="display: none;">
+			<div class="spinner-layer spinner-red">
 				<div class="circle-clipper left">
 				<div class="circle"></div>
 				</div><div class="gap-patch">
@@ -67,13 +66,30 @@
 				</div>
 			</div>
 			</div>
+			
+			<br>
+			<br>
+			<button class="btn btn-primary" type="button" id="submit" onclick="scrap()">START</button>
 		</form>
 	</div>
 	<script type="text/javascript">
+
+	const bar = document.getElementById('progress-bar');
+
+	$(document).ready(function(){
+		$(function() {
+	$('#submit').click(function(e) {
+			e.preventDefault();
+			bar.style.display='inline-block';
+		});
+	});
+	});
 		function scrap(){
 			var e = document.getElementById('gName');
 			var ind = e.options[e.selectedIndex].value;
-			var bar = document.getElementById('progress-bar').style.display="block";
+			
+			M.toast({html: 'Started Scrapping '+e.options[e.selectedIndex].text});
+
 			fetch("/scrap/"+String(ind), {
 				method: "GET"
 			})
@@ -97,14 +113,16 @@
 			.then((response) => response.json())
 			.then((jres) => {
 				if (jres["success"])
-				M.toast({html: jres["members"]+' Scrapped Successfully !'});
+				M.toast({html: jres["members"]+' Members Scrapped Successfully !'});
 				else
 				M.toast({html: 'Error Occurred !!'});
+				bar.style.display="none";
 			})
-			.catch((error) => 
-				M.toast({html: error}));
+			.catch((error) => {
+				M.toast({html: error});
+				bar.style.display="none";
+			});
 			
-			var bar = document.getElementById('progress-bar').style.display="none";
 		};
 	</script>
 </body>
