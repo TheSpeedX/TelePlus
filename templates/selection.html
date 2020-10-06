@@ -14,8 +14,9 @@
 <body>
 	{% include 'header.html' %}
 	<div class="container" style="text-align: center; margin: 0 auto; margin-top: 5rem;">
-		<h4>Choose Group</h4>
+		
 		<form style="margin-top: 2rem;">
+			<h6>Choose Group To Fetch</h6>
 			<select id="gName" style="display: block;" name="name" onchange="toggle_input()" required>
 				<option disabled selected>Choose your option</option>
 				{% for group in groups %}
@@ -23,116 +24,54 @@
 				{% endfor %}
 			</select>
 
+			<h6>Choose Part</h6>
+			<select id="gPart" style="display: block;" name="name" onchange="toggle_count()" required>
+				<option disabled selected>Choose your option</option>
+			</select>
+			<p>Member count: <span id="member_count">0</span></p>
 			<br>
-			<br>
-			<div style="display: none;" id="iNum_div">
-				<input type="number" min="1" name="n" id="iNum">
-				<br><br>
-				<label>
-					<input id="iMsg" type="checkbox" class="filled-in" onchange="toggle_msg();"/>
-					<span id="iMsg2">Split into 'n' member each</span>
-				</label>
-				<br><br>
-			</div>
-			<div class="preloader-wrapper big active"  id="progress-bar" style="display:none;">
-			<div class="spinner-layer spinner-blue">
-				<div class="circle-clipper left">
-				<div class="circle"></div>
-				</div><div class="gap-patch">
-				<div class="circle"></div>
-				</div><div class="circle-clipper right">
-				<div class="circle"></div>
-				</div>
-			</div>
-		
-			<div class="spinner-layer spinner-red">
-				<div class="circle-clipper left">
-				<div class="circle"></div>
-				</div><div class="gap-patch">
-				<div class="circle"></div>
-				</div><div class="circle-clipper right">
-				<div class="circle"></div>
-				</div>
-			</div>
-		
-			<div class="spinner-layer spinner-yellow">
-				<div class="circle-clipper left">
-				<div class="circle"></div>
-				</div><div class="gap-patch">
-				<div class="circle"></div>
-				</div><div class="circle-clipper right">
-				<div class="circle"></div>
-				</div>
-			</div>
-		
-			<div class="spinner-layer spinner-green">
-				<div class="circle-clipper left">
-				<div class="circle"></div>
-				</div><div class="gap-patch">
-				<div class="circle"></div>
-				</div><div class="circle-clipper right">
-				<div class="circle"></div>
-				</div>
-			</div>
-			</div>
 			
+			<h6>Choose Group To Add Members</h6>
+			<select id="gSelect" style="display: block;" name="name" required>
+				<option disabled selected>Choose your option</option>
+				{% for group in all_groups %}
+				<option value="{{ loop.index0 }}">{{ group }}</option>
+				{% endfor %}
+			</select>
 			<br>
 			<br>
-			<button class="btn btn-primary" type="button" id="submit" onclick="split()">START</button>
+			<button class="btn btn-primary" type="button" id="submit" onclick="chooser()">START</button>
 		</form>
 	</div>
 	<script type="text/javascript">
+
+		const groups = {{ groups|safe }};
+		const group_element = document.getElementById('gName');
+		const part_element = document.getElementById('gPart');
+		const add_element = document.getElementById('gSelect');
+		const member_count = document.getElementById('member_count')
 		function toggle_input() {
-			var _element = document.getElementById('iNum_div');
-			var _element2 = document.getElementById('iNum');
-			var _element3 = document.getElementById('gName');
-			
-			var _group = {{ groups|safe }};
-			_element.setAttribute('style', "display: block;");
-			_element2.setAttribute('max', String(_group[_element3.selectedIndex-1].count));
-			_element2.setAttribute('placeholder', "(Maximum "+ String(_group[_element3.selectedIndex-1].count) +")");
-		};
-	</script>
-	<script type="text/javascript">
-		function toggle_msg() {
-			var _element = document.getElementById('iMsg');
-			var _element2 = document.getElementById('iMsg2');
-			if (_element.checked) {
-				_element2.innerHTML = "Total to 'n' parts";
-			}
-			else {
-				_element2.innerHTML = "Split into 'n' member each";
+			var group = groups[group_element.selectedIndex-1];
+			part_element.innerHTML="<option disabled selected>Choose your option</option>";
+			var numParts= Object.keys(group.memcount).length;
+			for(var i=0;i<numParts;i++){
+				var option=document.createElement("option");
+				option.value=i;
+				option.text=(i+1);
+				part_element.add(option);
 			}
 		};
-	</script>
-	<script type="text/javascript">
-
-	const bar = document.getElementById('progress-bar');
-
-	$(document).ready(function(){
-		$(function() {
-	$('#submit').click(function(e) {
-			e.preventDefault();
-			bar.style.display='inline-block';
-		});
-	});
-	});
-	
-		function split(){
-			var e = document.getElementById('gName');
-			var ind = e.options[e.selectedIndex].value;
-			var parts = parseInt(document.getElementById("iNum").value.trim());
-			var splitByTotal = document.getElementById("iMsg").checked;
-			M.toast({html: 'Started Splitting '+e.options[e.selectedIndex].text});
-
-			fetch("/split/"+String(ind), {
-				method: "POST",
-				body: JSON.stringify({"parts":parts,
-									  "total_parts":splitByTotal}),
-				headers: {
-				"Content-Type": "application/json",
-				},
-				credentials: "same-origin",
+		function toggle_count() {
+			var group = groups[group_element.selectedIndex-1];
+			var memcount= group.memcount[part_element.selectedIndex-1];
+			member_count.innerHTML=memcount;
+		};
+		function chooser(){
+			var id = group_element.options[group_element.selectedIndex].value;
+			var part = part_element.options[part_element.selectedIndex].value;
+			var index = add_element.options[add_element.selectedIndex].value;
+			fetch("/chooser/"+String(id)+"/"+String(part)+"/"+String(index), {
+				method: "GET",
 			})
 			.then(
 				(response) => {
@@ -154,15 +93,14 @@
 			.then((response) => response.json())
 			.then((jres) => {
 				if (jres["success"])
-				M.toast({html: ' Splitted into '+jres["members"]+ ' parts Successfully !'});
+				M.toast({html: 'Started Adding Process !!!'});
 				else
 				M.toast({html: 'Error Occurred !!'});
-				bar.style.display="none";
 			})
 			.catch((error) => {
 				M.toast({html: error});
-				bar.style.display="none";
 			});
+			setTimeout(function(){window.location.href="/";},1500);
 			
 		};
 	</script>

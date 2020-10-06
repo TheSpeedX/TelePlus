@@ -3,12 +3,16 @@ from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import ApiIdInvalidError, PeerFloodError, UserPrivacyRestrictedError
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser
+from telethon.tl.functions.channels import InviteToChannelRequest
 
 import re
 import os
+import time
+import asyncio
 import json
 from datetime import datetime
 import logging
+import traceback
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('telethon').setLevel(level=logging.DEBUG)
@@ -17,21 +21,30 @@ def build_group_path(group):
     group=re.sub("[^a-zA-Z0-9]","-",group)
     return os.path.join("data","groups",group+".json")
 
-
 def save_group(group,data):
     with open(build_group_path(group),"w",encoding='UTF-8') as config_file:
         json.dump(data,config_file,indent=4)
 
+def build_phone_path(phone):
+    return os.path.join("data","phone",phone+".json")
+
+def save_phone(config_data,phone):
+    with open(build_phone_path(phone),"w") as config_file:
+        json.dump(config_data,config_file,indent=4)
+
+
+
 class TGClient:
 
     def __init__(self,loop,api_id,api_hash,phone):
-        self.api_id=api_id
-        self.api_hash=api_hash
-        self.phone=phone
-        self.groups=[]
-        self.groups_title=[]
-        self.auth_check=None
-        self.client=TelegramClient(self.phone, self.api_id, self.api_hash, loop=loop)
+        self.api_id = api_id
+        self.api_hash = api_hash
+        self.phone = phone
+        self.groups = []
+        self.groups_title = []
+        self.auth_check = None
+        self.client = TelegramClient(self.phone, self.api_id, self.api_hash, loop=loop)
+        self._run = False
         
     async def auth(self,code=None,phone_code=None):
         print("before connection")
@@ -91,8 +104,52 @@ class TGClient:
         save_group((target_group.title+"-"+str(target_group.id)),group_data)
         return group_data
 
-    def add(self):
-        pass
+    def terminate(self): 
+        self._run = False
+        config_data= dict(status=False,target_group="",message="",count=0,total=0,timestamp=datetime.now().timestamp())
+        save_phone(config_data,self.phone)
+
+    async def add(self,target_group,members):
+        self._run = True
+        target_group_entity = InputPeerChannel(target_group.id,target_group.access_hash)
+        x=0
+        phone_data = json.load(open(build_phone_path(self.phone)))
+        while(self._run and x<len(members)):
+            flag = 0
+            try:
+                SETTINGS = json.load(open("settings.json"))
+                delay = SETTINGS.get("delay")
+                user = members[x]
+                user_to_add = InputPeerUser(user['id'], user['access_hash'])
+                message = "Adding {name} to Group".format(name=user["name"])
+                await self.client(InviteToChannelRequest(target_group_entity,[user_to_add]))
+            except PeerFloodError:
+                message="Getting Flood Error from telegram. Waiting {delay} seconds".format(delay=delay)
+                delay = delay*5
+            except UserPrivacyRestrictedError:
+                message = "The user's privacy settings do not allow you to do this. Skipping."
+                delay = 0.5
+            except Exception as e:
+                message=str(e)
+                delay=0.5
+            print("USER: ",user["name"])
+            print("Message: ",message)
+            update_config=dict(message=message,count=x+1,timestamp=datetime.now().timestamp()+delay)
+            phone_data.update(update_config)
+            save_phone(phone_data,self.phone)
+            x+=1
+            await asyncio.sleep(delay)
+        if self._run:
+            phone_data.update({"message":"All users in list processed"})
+            save_phone(phone_data,self.phone)
+
+    def start_add(self,loop,target_group,members):
+        try:
+            print("STARTING ADD")
+            asyncio.run_coroutine_threadsafe(self.add(target_group,members),loop)
+        except:
+            traceback.print_exc()
+
 
     def todict(self):
         return {attr: getattr(self,attr) for attr in ["api_id","api_hash","phone"]}
