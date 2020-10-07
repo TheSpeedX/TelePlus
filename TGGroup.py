@@ -34,6 +34,12 @@ class Group:
         result.update({"count":count})
         return result
 
+    def chooser_config(self):
+        count=sum([len(subgroup) for subgroup in self.members])
+        result= {attr: getattr(self,attr) for attr in ["id","name"]}        
+        result.update({"memcount":{ i:len(k) for i,k in enumerate(self.members)}})
+        return result
+
     def __str__(self):
         print_attr=[ attr+"="+str(atval) for attr,atval in self.todict().items() ]
         return "<"+", ".join(print_attr)+">"
@@ -45,6 +51,7 @@ class GroupStore:
         self.group_store=[]
     
     def load(self):
+        self.group_store=[]
         group_path = os.path.join("data","groups","*.json")
         for path in glob.glob(group_path):
             with open(path,"r",encoding="UTF-8") as group_file:
@@ -88,5 +95,9 @@ class GroupStore:
 
     def toconfig(self):
         return [group.todict() for group in self.group_store]
+    
+    def chooser_config(self):
+        return [group.chooser_config() for group in self.group_store]
+
     def __str__(self):
         return str([str(group) for group in self.group_store])

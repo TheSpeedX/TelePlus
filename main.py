@@ -1,11 +1,13 @@
 import json
 import os
 from quart import Quart, render_template, request, jsonify, make_response,redirect,url_for,session
-from TGClient import ClientStore, TGClient
+from TGClient import *
 from TGGroup import GroupStore
 from datetime import datetime
 import asyncio
 import logging
+import traceback
+from threading import Thread 
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -29,31 +31,19 @@ def save_config():
     with open(SETTINGS.get("config_path"),"w") as config_file:
         json.dump(client_store.toconfig(),config_file,indent=4)
 
-def save_phone():
-    with open(build_phone_path(session["current"]["phone"]),"w") as config_file:
-        json.dump(session["phone"],config_file,indent=4)
-
-def build_phone_path(phone):
-    return os.path.join("data","phone",phone+".json")
-
-
-
-@app.before_first_request
-async def before_first_request_func():
-    session["config"]=client_store.toconfig()
-    if session["config"]:
-        session["current"] = session.get("config")[0]
-        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
-
-
 
 @app.route('/')
 async def home():
     # print("CONFIG: ",client_store.toconfig())
-    print("Home Request: ",client_store)
+    # print("Home Request: ",client_store)
+    session["config"]=client_store.toconfig()
+    if session["config"]:
+        session["current"] = session.get("config")[0]
+        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     if len(session["config"])==0:
         return await render_template("default.html",type="guest",info=session["phone"])
     else:
+        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
         if session["phone"].get("status"):
             return await render_template("default.html",type="active",info=session["phone"])
         else:
@@ -76,8 +66,8 @@ async def login():
         else:
             flag=await new_client.auth()
         if flag==True:
-            with open(build_phone_path(new_client.phone),"w") as acc_config:
-                json.dump(dict(status=False,attached_name="",count=0,total=0,current_user="",timestamp=datetime.now().timestamp()),acc_config,indent=4)
+            config_data= dict(status=False,target_group="",message="",count=0,total=0,timestamp=datetime.now().timestamp())
+            save_phone(config_data,phone=new_client.phone)
             client_store.add(new_client)
             session["config"]=client_store.toconfig()
             await change_number(data["api_id"])
@@ -111,6 +101,13 @@ async def logout():
         session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
     return redirect("/")
     
+
+@app.route('/stop')
+async def stop_add():
+    client = client_store.get(api_id=session["current"]["api_id"])
+    client.terminate()
+    return redirect("/")
+
     
 @app.route('/change/<api_id>')
 async def change_number(api_id):
@@ -123,6 +120,7 @@ async def scrap_group(index):
     client = client_store.get(phone=session["current"]["phone"])
     if index<len(client.groups):
         data = await client.scrap(index)
+        group_store.load()
         return {"success":True,"members":len(data["members"][0])}
     return {"success":False}
 
@@ -138,7 +136,8 @@ async def split_group(id):
 
 @app.route("/split")
 async def split_view():
-    print(group_store)
+    group_store.load()
+    # print(group_store)
     return await render_template("splitter.html",groups=group_store.toconfig())
 
 @app.route('/list')
@@ -152,6 +151,36 @@ async def list_groups():
         return await render_template("listing.html",flag=False,groups=client.groups_title)
     else:
         return await render_template("login.html",data=client.todict())
+
+@app.route('/chooser/<int:id>/<int:part>/<int:index>')
+async def add_group(id,part,index):
+    client =  client_store.get(phone=session["current"]["phone"])
+    from_group = group_store.get(id=id)
+    members = from_group.members[part]
+    target_group = client.groups[index]
+    config=dict(status=True,target_group=target_group.title,message="Started Bot...",count=0,total=len(members),timestamp=datetime.now().timestamp()+10)
+    save_phone(config,client.phone)
+    print(from_group.name)
+    try:
+        thread = Thread(target=client.start_add,args=(loop,target_group,members,),daemon=True)
+        thread.start()
+    except:
+        traceback.print_exc()
+    return {"success":True}
+
+@app.route('/chooser')
+async def chooser_view():
+    group_store.load()
+    data = group_store.chooser_config()
+    client = client_store.get(phone=session["current"]["phone"])
+    flag = await client.auth()
+    if flag:
+        if len(client.groups)==0:
+            await client.list_groups()
+        return await render_template("selection.html",groups=data,all_groups=client.groups_title)
+    else:
+        return await render_template("login.html",data=client.todict())
+    
 
 
 if __name__ == '__main__':

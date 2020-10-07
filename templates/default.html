@@ -114,21 +114,16 @@
           </div>
           <div style="padding-left: 20%; padding-bottom: 20px;">
             <p>
-              {% if info.get("current_user") %}
-              <b>Member:</b> {{info.get("current_user")}} <br>
+              {% if info.get("message") %}
+              <b>Status:</b> {{info.get("message")}} <br>
               {% endif %}
-              {% if info.get("attached_name") %}
-              <b>Attached List:</b> {{info.get("attached_name")}} <br>
+              {% if info.get("target_group") %}
+              <b>Adding To:</b> {{info.get("target_group")}} <br>
               {% endif %}
-              {% if info.get("group") %}
-              <b>Adding To:</b> {{info.get("group")}} <br>
-              {% endif %}
-              {% if info.get("count") and info.get("total") %}
-              <b>Request Processed:</b> {{info.get("count")}} / {{info.get("count")}} <br>
-              {% endif %}
+              <b>Request Processed:</b> {{info.get("count")}} / {{info.get("total")}} <br>
 
               </p>
-          <a class="waves-effect waves-light btn" href="#!"><i class="material-icons left">cloud</i>Stop</a>
+          <a class="waves-effect waves-light btn" onclick="stopAll()"><i class="material-icons left">cloud</i>Stop</a>
           </div>
         </div>
       </div>
@@ -150,7 +145,7 @@
         <div class="card-panel">
           <span>Add members to Groups</span>
           <div class="card-action">
-            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Add</a>      
+            <a class="waves-effect waves-light btn-large" href="/chooser"><i class="material-icons left">cloud</i>Add</a>      
           </div>
         </div>
       </div>
@@ -180,6 +175,10 @@
   $(document).ready(function(){
       $(".dropdown-trigger").dropdown();
   });
+  function stopAll(){
+    M.toast({html: "Stopping Process"});
+		setTimeout(function(){window.location.href="/stop";},2000);
+  }
   </script>
 
 <script>
@@ -201,7 +200,8 @@
     }
   };
   var interval={{info.get("timestamp",0)}}-Math.floor(Date.now() / 1000);
-  const TIME_LIMIT = interval >5 ? interval: 5;
+  interval = Math.round(interval);
+  const TIME_LIMIT = interval >10 ? interval: 10;
   let timePassed = 0;
   let timeLeft = TIME_LIMIT;
   let timerInterval = null;
