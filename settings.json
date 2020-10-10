@@ -1,5 +1,7 @@
 {
     "delay": 60,
     "config_path": "config.json",
-    "port": 5000
+    "port": 5000,
+    "secret_key": "",
+    "auth_token": ""
 }

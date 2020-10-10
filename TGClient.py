@@ -11,11 +11,6 @@ import time
 import asyncio
 import json
 from datetime import datetime
-import logging
-import traceback
-
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger('telethon').setLevel(level=logging.DEBUG)
 
 def build_group_path(group):
     group=re.sub("[^a-zA-Z0-9]","-",group)
@@ -47,14 +42,14 @@ class TGClient:
         self._run = False
         
     async def auth(self,code=None,phone_code=None):
-        print("before connection")
+        # print("before connection")
         await self.client.connect()
         if self.auth_check:
             if (datetime.now()-self.auth_check).seconds<600:
                 return True
         if code:
             await self.client.sign_in(self.phone,code,phone_code_hash=phone_code)
-        print("on connection")
+        # print("on connection")
         flag = await self.client.is_user_authorized()
         
         if not flag:
@@ -62,13 +57,13 @@ class TGClient:
                 return await self.client.send_code_request(self.phone)
             except ApiIdInvalidError:
                 return None
-        print("after connection")
+        # print("after connection")
         self.auth_check=datetime.now()
         return True
 
     async def list_groups(self):
         chunk_size=200
-        print("Started Listing...")
+        # print("Started Listing...")
         result = await self.client(GetDialogsRequest(
                 offset_date=None,
                 offset_id=0,
@@ -90,7 +85,7 @@ class TGClient:
     async def scrap(self,index):
         target_group=self.groups[index]
         all_participants = []
-        all_participants = await self.client.get_participants(target_group)
+        all_participants = await self.client.get_participants(target_group, aggressive=True)
 
         group_data=dict(name=target_group.title,id=target_group.id)
         final_data=[]
@@ -132,8 +127,8 @@ class TGClient:
             except Exception as e:
                 message=str(e)
                 delay=0.5
-            print("USER: ",user["name"])
-            print("Message: ",message)
+            # print("USER: ",user["name"])
+            # print("Message: ",message)
             update_config=dict(message=message,count=x+1,timestamp=datetime.now().timestamp()+delay)
             phone_data.update(update_config)
             save_phone(phone_data,self.phone)
@@ -144,11 +139,7 @@ class TGClient:
             save_phone(phone_data,self.phone)
 
     def start_add(self,loop,target_group,members):
-        try:
-            print("STARTING ADD")
-            asyncio.run_coroutine_threadsafe(self.add(target_group,members),loop)
-        except:
-            traceback.print_exc()
+        asyncio.run_coroutine_threadsafe(self.add(target_group,members),loop)
 
 
     def todict(self):
