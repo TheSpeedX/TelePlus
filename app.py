@@ -39,13 +39,13 @@ async def home():
     session["config"]=client_store.toconfig()
     if len(session["config"])==0:
         return await render_template("default.html",type="guest",info={})
-    else:
+    elif not session.get("current"):
         session["current"] = session.get("config")[0]
-        session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
-        if session["phone"].get("status"):
-            return await render_template("default.html",type="active",info=session["phone"])
-        else:
-            return await render_template("default.html",type="inactive",info=session["phone"])
+    session["phone"]= json.load(open(build_phone_path(session["current"]["phone"])))
+    if session["phone"].get("status"):
+        return await render_template("default.html",type="active",info=session["phone"])
+    else:
+        return await render_template("default.html",type="inactive",info=session["phone"])
     
 
 @app.route('/adduser',methods=["GET","POST"])
@@ -179,7 +179,7 @@ async def chooser_view():
         return await render_template("login.html",data=client.todict())
     
 def main():
-    if not "secret_key" in SETTINGS:
+    if not SETTINGS.get("secret_key"):
         SETTINGS.update({"secret_key":os.urandom(32).hex()})
         save_settings()
     app.secret_key = SETTINGS.get("secret_key",os.urandom(32).hex())

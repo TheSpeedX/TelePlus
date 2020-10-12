@@ -127,8 +127,6 @@ class TGClient:
             except Exception as e:
                 message=str(e)
                 delay=0.5
-            # print("USER: ",user["name"])
-            # print("Message: ",message)
             update_config=dict(message=message,count=x+1,timestamp=datetime.now().timestamp()+delay)
             phone_data.update(update_config)
             save_phone(phone_data,self.phone)
