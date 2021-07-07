@@ -31,14 +31,14 @@ class Group:
         return self.members
     
     def todict(self):
-        count=sum([len(subgroup) for subgroup in self.members])
+        count = sum(len(subgroup) for subgroup in self.members)
         result= {attr: getattr(self,attr) for attr in ["id","name","access_hash"]}
         result.update({"count":count})
         return result
 
     def chooser_config(self):
-        count=sum([len(subgroup) for subgroup in self.members])
-        result= {attr: getattr(self,attr) for attr in ["id","name"]}        
+        count = sum(len(subgroup) for subgroup in self.members)
+        result= {attr: getattr(self,attr) for attr in ["id","name"]}
         result.update({"memcount":{ i:len(k) for i,k in enumerate(self.members)}})
         return result
 
@@ -68,22 +68,14 @@ class GroupStore:
 
     def get(self,**kwargs):
         for i,group in enumerate(self.group_store):
-            flag=True
-            for attr in kwargs:
-                if not str(kwargs[attr])==str(getattr(group,attr)):
-                    flag=False
-                    break
+            flag = all(str(kwargs[attr])==str(getattr(group,attr)) for attr in kwargs)
             if flag:
                 return group
         return None
 
     def get_index(self,**kwargs):
         for i,group in enumerate(self.group_store):
-            flag=True
-            for attr in kwargs:
-                if not str(kwargs[attr])==str(getattr(group,attr)):
-                    flag=False
-                    break
+            flag = all(str(kwargs[attr])==str(getattr(group,attr)) for attr in kwargs)
             if flag:
                 return i
         return -1
@@ -91,7 +83,7 @@ class GroupStore:
     
     def add(self,group):
         index = self.get_index(id=group.id)
-        if not index==-1:
+        if index != -1:
             self.pop(index)
         self.group_store.append(group)
 

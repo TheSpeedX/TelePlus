@@ -37,6 +37,8 @@ def save_phone(config_data, phone):
 
 class TGClient:
 
+    DELAY = 60
+
     def __init__(self, loop, api_id, api_hash, phone, session_name):
         self.api_id = api_id
         self.api_hash = api_hash
@@ -138,16 +140,15 @@ class TGClient:
         phone_data = json.load(open(build_phone_path(self.phone)))
         while (self._run and x < len(members)):
             try:
-                SETTINGS = json.load(open("settings.json"))
-                delay = SETTINGS.get("delay")
+                delay = TGClient.DELAY
                 user = members[x]
                 user_to_add = InputPeerUser(user['id'], user['access_hash'])
                 message = "Adding {name} to Group".format(name=user["name"])
                 await self.client(InviteToChannelRequest(target_group_entity, [user_to_add]))
             except PeerFloodError:
+                delay = delay*5
                 message = "Getting Flood Error from telegram. Waiting {delay} seconds".format(
                     delay=delay)
-                delay = delay*5
             except UserPrivacyRestrictedError:
                 message = "The user's privacy settings do not allow you to do this. Skipping."
                 delay = 0.5

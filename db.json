@@ -1,0 +1,12 @@
+{
+    "settings": {
+        "1": {
+            "delay": 60,
+            "host": "0.0.0.0",
+            "port": 5000,
+            "secret_key": ""
+        }
+    },
+    "config": {},
+    "join_groups":{}
+}

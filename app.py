@@ -7,32 +7,41 @@ from datetime import datetime
 import asyncio
 import logging
 import traceback
+from tinydb import TinyDB
 from threading import Thread
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('telethon').setLevel(level=logging.DEBUG)
 
 app = Quart(__name__)
+main_db = TinyDB('db.json')
 
-SETTINGS = json.load(open("settings.json"))
+SETTINGS = main_db.table("settings").all()[0]
 
 client_store = ClientStore()
 group_store = GroupStore()
 group_store.load()
 loop = asyncio.get_event_loop()
 
-for config in json.load(open(SETTINGS.get("config_path"))):
+for config in main_db.table("config"):
     client_store.add(TGClient(loop, **config))
 
 
 def save_settings():
-    with open("settings.json", "w") as setting_file:
-        json.dump(SETTINGS, setting_file, indent=4)
+    TGClient.DELAY=SETTINGS.get("delay")
+    settings_db = main_db.table("settings")
+    settings_db.truncate()
+    settings_db.insert(SETTINGS)
+    # with open("settings.json", "w") as setting_file:
+    #     json.dump(SETTINGS, setting_file, indent=4)
 
 
 def save_config():
-    with open(SETTINGS.get("config_path"), "w") as config_file:
-        json.dump(client_store.toconfig(), config_file, indent=4)
+    config_db = main_db.table("config")
+    config_db.truncate()
+    config_db.insert_multiple(client_store.toconfig())
+    # with open(SETTINGS.get("config_path"), "w") as config_file:
+    #     json.dump(client_store.toconfig(), config_file, indent=4)
 
 
 @app.route('/')
@@ -209,8 +218,10 @@ def main():
         SETTINGS.update({"secret_key": os.urandom(32).hex()})
         save_settings()
     app.secret_key = SETTINGS.get("secret_key", os.urandom(32).hex())
-    app.run(host="0.0.0.0", port=SETTINGS.get(
-        "port", 5000), debug=True, loop=loop)
+    app.run(
+        host=SETTINGS.get("host", "0.0.0.0"),
+        port=SETTINGS.get("port", 5000),
+        debug=True, loop=loop)
 
 
 if __name__ == '__main__':
