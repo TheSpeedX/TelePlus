@@ -5,16 +5,18 @@ import os
 import json
 
 class Group:
-    def __init__(self,path,name,id,members):
+    def __init__(self,path,name,id,access_hash,members):
         self.path=path
         self.filename=os.path.split(path)[1]
         self.name=name
         self.id=id
+        self.access_hash = access_hash
         self.members=members
 
     def save(self):
         config={"name":self.name,
                 "id":self.id,
+                "access_hash":self.access_hash,
                 "members":self.members}
         save_group(self.filename[:-5],config)
     
@@ -30,7 +32,7 @@ class Group:
     
     def todict(self):
         count=sum([len(subgroup) for subgroup in self.members])
-        result= {attr: getattr(self,attr) for attr in ["id","name","filename"]}
+        result= {attr: getattr(self,attr) for attr in ["id","name","access_hash"]}
         result.update({"count":count})
         return result
 

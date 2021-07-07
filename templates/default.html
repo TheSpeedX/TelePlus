@@ -77,9 +77,29 @@
       justify-content: center;
       font-size: 24px;
     }
+
+    .btn-ui{
+      width: 50%;
+    }
+
+    .col-ui{
+      padding: 0 2.75rem !important;
+      width: auto !important;
+    }
+
+    .card-panel{
+      text-align: center;
+    }
+
+    .span-ui{
+      display: inline-block;
+      font-weight: bolder;
+      font-size: large;
+      padding-bottom: 2rem;
+    }
   </style>
   <div class="container">
-    <div class="row" style="margin-top: 15%;"></div>
+    <div class="row" style="margin-top: 20px;"></div>
 
     {% if type=="guest" %}
     
@@ -97,7 +117,7 @@
           <br>
           <br>
           <span class="break-line">
-            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">cloud</i>Add Account</a>      
+            <a class="waves-effect waves-light btn-large" href="/adduser"><i class="material-icons left">add</i>Add Account</a>      
           </span>
         </div>
       </div>
@@ -133,37 +153,55 @@
       <!-- While Paused -->
 
       <div class="row">
-      <div class="col s12" style="width: auto;">
+      <div class="col-ui col s6">
         <div class="card-panel">
-          <span>Scrap Members From Groups</span>
+          <span class="span-ui">Scrap Members From Groups</span>
           <div class="card-action">
-            <a class="waves-effect waves-light btn-large" href="/list"><i class="material-icons left">cloud</i>Scrap</a>      
+            <a class="waves-effect waves-light btn-large btn-ui" href="/list"><i class="material-icons left">cloud</i>Scrap</a>      
           </div>
         </div>
       </div>
-      <div class="col s12" style="width: auto;">
+      <div class="col-ui col s6">
         <div class="card-panel">
-          <span>Add members to Groups</span>
+          <span class="span-ui">Add members to Groups</span>
           <div class="card-action">
-            <a class="waves-effect waves-light btn-large" href="/chooser"><i class="material-icons left">cloud</i>Add</a>      
+            <a class="waves-effect waves-light btn-large btn-ui" href="/chooser"><i class="material-icons left">add</i>Add</a>      
           </div>
         </div>
       </div>
     </div>
     <div class="row">
-      <div class="col s12" style="width: auto;">
+      <div class="col-ui col s6">
         <div class="card-panel">
-          <span>Split A Scrapped List</span>
+          <span class="span-ui">Split A Scrapped List</span>
           <div class="card-action">
-            <a class="waves-effect waves-light btn-large" href="/split"><i class="material-icons left">cloud</i>Split</a>      
+            <a class="waves-effect waves-light btn-large btn-ui" href="/split"><i class="material-icons left">call_split</i>Split</a>      
           </div>
         </div>
       </div>
-      <div class="col s12" style="width: auto;">
+      <div class="col-ui col s6">
         <div class="card-panel">
-          <span>Global Settings</span>
+          <span class="span-ui">Join Groups</span>
           <div class="card-action">
-            <a class="waves-effect waves-light btn-large" href="/settings"><i class="material-icons left">cloud</i>Open</a>      
+            <a class="waves-effect waves-light btn-large btn-ui" href="/settings"><i class="material-icons left">person_add</i>Join</a>      
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-ui col s6">
+        <div class="card-panel">
+          <span class="span-ui">Delete Groups</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large btn-ui" href="/split"><i class="material-icons left">delete</i>Delete</a>      
+          </div>
+        </div>
+      </div>
+      <div class="col-ui col s6">
+        <div class="card-panel">
+          <span class="span-ui">Global Settings</span>
+          <div class="card-action">
+            <a class="waves-effect waves-light btn-large btn-ui" href="/settings"><i class="material-icons left">settings</i>Open</a>      
           </div>
         </div>
       </div>

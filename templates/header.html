@@ -20,7 +20,7 @@
         {% else %}
         <a onclick='changeNumber("{{ x["api_id"] }}");'>
         {% endif %}
-          {{ x["phone"] }}
+          {{ x["session_name"] }}
         </a>
       </li>
     {% endfor %}
@@ -29,7 +29,7 @@
   <nav>
     <div class="nav-wrapper"  style="background-color: cornflowerblue;">
       <a class="dropdown-trigger" href="#!" data-target="dropdown1" style="padding-left: 5%;">
-        {{ session["current"].get("phone") if not session["config"]==[] and session["current"].get("phone") else "Guest" }}
+        {{ session["current"].get("phone")+" ("+session["current"].get("session_name")+")" if not session["config"]==[] and session["current"].get("phone") else "Guest" }}
         <i class="material-icons left" style="display: contents;">arrow_drop_down</i>
       </a>
       <a href="#" data-target="mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
