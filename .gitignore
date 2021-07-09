@@ -3,4 +3,4 @@
 !data/phone/*.py
 !data/groups/*.py
 __pycache__/
-config.json
+venv

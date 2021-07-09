@@ -1,39 +1,63 @@
-
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script  src="https://code.jquery.com/jquery-3.5.1.min.js"  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="  crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous"> -->
-
-    
-    <!-- Material Theme -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+  integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+  integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous"> -->
 
 
-  <ul id="dropdown1" class="dropdown-content">
-    {% for x in session["config"] %}
-      <li>
-        {% if session["current"]["api_id"]==x["api_id"] %}
-        <a onclick='changeNumber("{{ x["api_id"] }}");' style="background-color: #cacaca;">
-        {% else %}
-        <a onclick='changeNumber("{{ x["api_id"] }}");'>
+<!-- Material Theme -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+
+<ul id="dropdown1" class="dropdown-content">
+  {% for x in session["config"] %}
+  <li>
+    {% if session["current"]["api_id"]==x["api_id"] %}
+    <a onclick='changeNumber("{{ x["api_id"] }}");' style="background-color: #cacaca;">
+      {% else %}
+      <a onclick='changeNumber("{{ x["api_id"] }}");'>
         {% endif %}
-          {{ x["session_name"] }}
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
-  <div class="navbar-fixed">
+        {{ x["session_name"] }}
+      </a>
+  </li>
+  {% endfor %}
+</ul>
+<div class="navbar-fixed">
   <nav>
-    <div class="nav-wrapper"  style="background-color: cornflowerblue;">
+    <div class="nav-wrapper" style="background-color: cornflowerblue;">
       <a class="dropdown-trigger" href="#!" data-target="dropdown1" style="padding-left: 5%;">
-        {{ session["current"].get("phone")+" ("+session["current"].get("session_name")+")" if not session["config"]==[] and session["current"].get("phone") else "Guest" }}
+        {{ session["current"].get("phone")+" ("+session["current"].get("session_name")+")" if not session["config"]==[]
+        and session["current"].get("phone") else "Guest" }}
         <i class="material-icons left" style="display: contents;">arrow_drop_down</i>
       </a>
       <a href="#" data-target="mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
       <ul class="right hide-on-med-and-down" style="padding-right: 5%;">
+        <li id="join-loader" style="padding-top: 2%;visibility: hidden;">
+          <div class="preloader-wrapper small active" style="width: 26px;height: 26px;">
+            <div class="spinner-layer spinner-green-only" style="border-color: #fff;">
+              <div class="circle-clipper left">
+                <div class="circle"></div>
+              </div>
+              <div class="gap-patch">
+                <div class="circle"></div>
+              </div>
+              <div class="circle-clipper right">
+                <div class="circle"></div>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <a class="tooltipped" data-position="bottom" data-tooltip="Auto Join" onclick="joinAllGroup()">
+            <i class="material-icons">person_add</i>
+          </a>
+        </li>
         <li><a href="/">Home</a></li>
         <li><a href="/adduser">Add Account</a></li>
         <li><a href="/settings">Settings</a></li>
@@ -44,43 +68,89 @@
     </div>
   </nav>
 </div>
-      <ul class="sidenav" id="mobile">
-        <li><a href="/">Home</a></li>
-        <li><a href="/adduser">Add Account</a></li>
-        <li><a href="/settings">Settings</a></li>
-        {% if not session["config"]==[] %}
-        <li><a href="/logout">Log out</a></li>
-        {% endif %}
-      </ul>
+<ul class="sidenav" id="mobile">
+  <li><a onclick="joinAllGroup()">Auto Join</a></li>
+  <li><a href="/">Home</a></li>
+  <li><a href="/adduser">Add Account</a></li>
+  <li><a href="/settings">Settings</a></li>
+  {% if not session["config"]==[] %}
+  <li><a href="/logout">Log out</a></li>
+  {% endif %}
+</ul>
 
 
-  
-  <script>
-    $(document).ready(function(){
-        $(".dropdown-trigger").dropdown();
-        $('.sidenav').sidenav();
-    });
-    
-        
 
-    function changeNumber(api_id){
-      fetch(`${window.origin}/change/${api_id}`)
-        .then(
-          (response) => {
-            if (response.ok) {
-              location.reload();
-            } else {
-              var error = new Error(
-                "Error " + response.status + ": " + response.statusText
-              );
-              error.response = response;
-              throw error;
-            }
-          },
-          (error) => {
-            var errmess = new Error(error.message);
-            throw errmess;
+<script>
+  $(document).ready(function () {
+    $(".dropdown-trigger").dropdown();
+    $('.sidenav').sidenav();
+  });
+
+
+
+  function changeNumber(api_id) {
+    fetch(`${window.origin}/change/${api_id}`)
+      .then(
+        (response) => {
+          if (response.ok) {
+            location.reload();
+          } else {
+            var error = new Error(
+              "Error " + response.status + ": " + response.statusText
+            );
+            error.response = response;
+            throw error;
           }
-        );
-    }
-    </script>
+        },
+        (error) => {
+          var errmess = new Error(error.message);
+          throw errmess;
+        }
+      );
+  }
+  function joinAllGroup() {
+    document.getElementById("join-loader").style.visibility = "";
+    M.toast({ html: 'Joining Groups !!' });
+
+    fetch("/join", {
+      method: "POST",
+      body: JSON.stringify({ "link": "all" }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+    })
+      .then(
+        (response) => {
+          if (response.ok) {
+            return response;
+          } else {
+            var error = new Error(
+              "Error " + response.status + ": " + response.statusText
+            );
+            error.response = response;
+            throw error;
+          }
+        },
+        (error) => {
+          var errmess = new Error(error.message);
+          throw errmess;
+        }
+      )
+      .then((response) => response.json())
+      .then((jres) => {
+        M.Toast.dismissAll();
+        if (jres["success"]) {
+          M.toast({ html: ' Joined All Groups' });
+        }
+        else {
+          M.toast({ html: 'Error Occurred !!' });
+          M.toast({ html: jres["message"] });
+        }
+        document.getElementById("join-loader").style.visibility = "hidden";
+      })
+      .catch((error) => {
+        M.toast({ html: error });
+      });
+  }
+</script>

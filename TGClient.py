@@ -1,7 +1,8 @@
 
 from telethon import TelegramClient
 from telethon.errors.rpcerrorlist import ApiIdInvalidError, PeerFloodError, UserPrivacyRestrictedError, SessionPasswordNeededError
-from telethon.tl.functions.messages import GetDialogsRequest, ImportChatInviteRequest
+from telethon.tl.functions.contacts import ResolveUsernameRequest
+from telethon.tl.functions.messages import CheckChatInviteRequest, GetDialogsRequest, ImportChatInviteRequest
 from telethon.tl.types import InputPeerEmpty, InputPeerChannel, InputPeerUser, InputChannel
 from telethon.tl.functions.channels import InviteToChannelRequest, JoinChannelRequest
 
@@ -73,6 +74,26 @@ class TGClient:
         # print("after connection")
         self.auth_check = datetime.now()
         return True
+
+    async def get_group_from_link(self, link):
+        link_id = link.split("/")[-1]
+        chat_grp = None
+        if "joinchat" in link:
+            chat_grp = await self.client(CheckChatInviteRequest(hash=link_id))
+        else:
+            chat_grp = await self.client(ResolveUsernameRequest(username=link_id))
+            chat_grp = chat_grp.chats[0]
+        return chat_grp
+
+    async def join_group_from_link(self, link):
+        link_id = link.split("/")[-1]
+        chat_grp = None
+        if "joinchat" in link:
+            chat_grp = await self.client(ImportChatInviteRequest(link_id))
+        else:
+            chat_grp = await self.client(JoinChannelRequest(link_id))
+            chat_grp = chat_grp.chats[0]
+        return chat_grp
 
     async def list_groups(self):
         chunk_size = 200

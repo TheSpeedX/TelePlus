@@ -1,14 +1,16 @@
 import json
 import os
-from quart import Quart, render_template, request, jsonify, make_response, redirect, url_for, session
+from quart import Quart, render_template, request, redirect, session
 from TGClient import *
 from TGGroup import GroupStore
 from datetime import datetime
 import asyncio
 import logging
 import traceback
-from tinydb import TinyDB
+from tinydb import TinyDB, Query
 from threading import Thread
+from telethon.tl.functions.messages import CheckChatInviteRequest
+from telethon.tl.functions.contacts import ResolveUsernameRequest
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('telethon').setLevel(level=logging.DEBUG)
@@ -28,7 +30,7 @@ for config in main_db.table("config"):
 
 
 def save_settings():
-    TGClient.DELAY=SETTINGS.get("delay")
+    TGClient.DELAY = SETTINGS.get("delay")
     settings_db = main_db.table("settings")
     settings_db.truncate()
     settings_db.insert(SETTINGS)
@@ -211,6 +213,70 @@ async def chooser_view():
             await client.list_groups()
         return await render_template("selection.html", groups=data, all_groups=client.groups_title)
     return await render_template("login.html", data=client.todict())
+
+
+@app.route('/join', methods=["POST"])
+async def join_group():
+    data = await request.get_json()
+    link = data.get("link")
+    if not link:
+        return {"success": False, "message": "No Link Sent"}
+
+    client = client_store.get(phone=session["current"]["phone"])
+    flag = await client.auth()
+    if not flag:
+        return {"success": False, "message": "Authentication Error Login Again"}
+    if link=="all":
+        links = main_db.table("join_groups").all()
+        for link in links:
+            try:
+                await client.join_group_from_link(link['link'])
+                await asyncio.sleep(1)
+            except:
+                traceback.print_exc()
+        return {"success": True}
+    chat_grp = await client.join_group_from_link(link)
+    return {"success": True, "message": chat_grp.title}
+
+
+@app.route('/auto_join', methods=["GET"])
+async def auto_join_group():
+    return await render_template("join_group.html", join_groups_list=main_db.table("join_groups").all())
+
+
+@app.route('/auto_join/add', methods=["POST"])
+async def auto_join_group_add():
+    data = await request.get_json()
+    link = data.get("link")
+    if not link:
+        return {"success": False, "message": "No Link Sent"}
+
+    client = client_store.get(phone=session["current"]["phone"])
+    flag = await client.auth()
+    if not flag:
+        return {"success": False, "message": "Authentication Error Login Again"}
+    chat_grp = await client.get_group_from_link(link)
+    grp_name = chat_grp.title
+    logging.debug(grp_name)
+    join_groups_db = main_db.table("join_groups")
+    join_groups_db.upsert(
+        {'name': grp_name, 'link': link}, Query()['link'] == link)
+
+    return {"success": True, "message": grp_name}
+
+
+@app.route('/auto_join/remove', methods=["POST"])
+async def auto_join_group_remove():
+    data = await request.get_json()
+    link = data.get("link")
+    if not link:
+        return {"success": False, "message": "No Link Sent"}
+
+    join_groups_db = main_db.table("join_groups")
+    group = join_groups_db.get(Query()['link'] == link)
+    join_groups_db.remove(doc_ids=[group.doc_id])
+
+    return {"success": True, "message": group["name"]}
 
 
 def main():
