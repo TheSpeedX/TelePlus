@@ -92,7 +92,7 @@ class TGClient:
             chat_grp = await self.client(ImportChatInviteRequest(link_id))
         else:
             chat_grp = await self.client(JoinChannelRequest(link_id))
-            chat_grp = chat_grp.chats[0]
+        chat_grp = chat_grp.chats[0]
         return chat_grp
 
     async def list_groups(self):
