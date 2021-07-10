@@ -22,7 +22,6 @@ SETTINGS = main_db.table("settings").all()[0]
 
 client_store = ClientStore()
 group_store = GroupStore()
-group_store.load()
 loop = asyncio.get_event_loop()
 
 for config in main_db.table("config"):
@@ -57,6 +56,8 @@ async def home():
         session["current"] = session.get("config")[0]
     session["phone"] = json.load(
         open(build_phone_path(session["current"]["phone"])))
+    client = client_store.get(phone=session["current"]["phone"])
+    group_store.load(client.phone)
     if session["phone"].get("status"):
         return await render_template("default.html", type="active", info=session["phone"])
     else:
@@ -140,7 +141,7 @@ async def scrap_group(index):
     client = client_store.get(phone=session["current"]["phone"])
     if index < len(client.groups):
         data = await client.scrap(index)
-        group_store.load()
+        group_store.load(client.phone)
         return {"success": True, "members": len(data["members"][0])}
     return {"success": False}
 
@@ -150,7 +151,7 @@ async def scrap_group_exclude(index, exindex):
     client = client_store.get(phone=session["current"]["phone"])
     if index < len(client.groups):
         data = await client.scrap(index, exclude=exindex)
-        group_store.load()
+        group_store.load(client.phone)
         return {"success": True, "members": len(data["members"][0])}
     return {"success": False}
 
@@ -167,7 +168,8 @@ async def split_group(id):
 
 @app.route("/split")
 async def split_view():
-    group_store.load()
+    client = client_store.get(phone=session["current"]["phone"])
+    group_store.load(client.phone)
     # print(group_store)
     return await render_template("splitter.html", groups=group_store.toconfig())
 
@@ -204,15 +206,44 @@ async def add_group(id, part, index):
 
 @app.route('/chooser')
 async def chooser_view():
-    group_store.load()
-    data = group_store.chooser_config()
     client = client_store.get(phone=session["current"]["phone"])
+    group_store.load(client.phone)
+    data = group_store.chooser_config()
     flag = await client.auth()
     if flag:
         if len(client.groups) == 0:
             await client.list_groups()
         return await render_template("selection.html", groups=data, all_groups=client.groups_title)
     return await render_template("login.html", data=client.todict())
+
+
+@app.route("/delete/<int:id>",methods=["POST"])
+async def delete_group_id(id):
+    data = await request.get_json()
+    if data.get("deleteAll"):
+        group_store.delete_all()
+        return {"success": True, "message": "All Groups"}
+    client = client_store.get(phone=session["current"]["phone"])
+    group = group_store.get(id=id)
+    group.delete()
+    group_store.load(client.phone)
+    return {"success": True, "message": group.name}
+
+
+@app.route("/delete", methods=["GET","POST"])
+async def delete_group():
+    if request.method == "GET":
+        return await render_template("delete.html", groups=group_store.toconfig())
+    data = await request.get_json()
+    if data.get("deleteAll"):
+        group_store.delete_all()
+        return {"success": True, "message": "All Groups"}
+    index = data.get("id")
+    client = client_store.get(phone=session["current"]["phone"])
+    group = group_store.get(id=index)
+    group.delete()
+    group_store.load(client.phone)
+    return {"success": True, "message": group.name}
 
 
 @app.route('/join', methods=["POST"])

@@ -8,6 +8,7 @@ Powerful Telegram Members Scrapper and Adder
 
 * Runs a Simple Web UI
 * Scraps all/unique memebers from groups
+* Delete scrapped groups
 * Adds members using multiple numbers simultaneously
 * Join groups by links
 * Switch between different accounts

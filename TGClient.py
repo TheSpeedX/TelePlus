@@ -8,9 +8,9 @@ from telethon.tl.functions.channels import InviteToChannelRequest, JoinChannelRe
 
 import re
 import os
-import time
 import asyncio
 import json
+import hashlib
 from datetime import datetime
 import logging
 
@@ -139,7 +139,8 @@ class TGClient:
                 final_data.append(
                     dict(username=username, name=name, id=user.id, access_hash=user.access_hash))
         group_data["members"] = [final_data]
-        save_group((target_group.title+"-"+str(target_group.id)), group_data)
+        group_hash = hashlib.md5(str(target_group.id).encode()).hexdigest()
+        save_group(group_hash+"-"+self.phone, group_data)
         return group_data
 
     def terminate(self):
