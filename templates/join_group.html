@@ -36,7 +36,7 @@
             <colgroup>
                 <col style="width: max-content;">
                 <col style="width: max-content;">
-                <col style="width: 30px">
+                <col style="width: 30px;display: ruby-base;">
             </colgroup>
             <thead>
                 <tr>
@@ -56,6 +56,9 @@
                         {{ group['link'] }}
                     </td>
                     <td>
+                        <a class="btn join-btn">
+                            <i class="tiny material-icons">person_add</i>
+                        </a>
                         <a class="btn remove-btn">
                             <i class="tiny material-icons">delete</i>
                         </a>
@@ -76,6 +79,15 @@
 
         $.each($tds, function () {
             removeGroupFromAutoJoin($(this).text().trim());
+        });
+
+    });
+    $(".join-btn").click(function () {
+        var $row = $(this).closest("tr"),
+            $tds = $row.find("td:nth-child(2)");
+
+        $.each($tds, function () {
+            joinGroup($(this).text().trim());
         });
 
     });
@@ -173,8 +185,8 @@
                 M.toast({ html: error });
             });
     };
-    function joinGroup() {
-        var link = document.getElementById('group_link').value;
+    function joinGroup(groupLink) {
+        var link = groupLink || document.getElementById('group_link').value;
         if (link === undefined || link.length == 0) {
             M.toast({ html: 'Empty Link' });
             return;

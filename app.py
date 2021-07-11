@@ -29,7 +29,6 @@ for config in main_db.table("config"):
 
 
 def save_settings():
-    TGClient.DELAY = SETTINGS.get("delay")
     settings_db = main_db.table("settings")
     settings_db.truncate()
     settings_db.insert(SETTINGS)
