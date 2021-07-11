@@ -29,6 +29,7 @@ for config in main_db.table("config"):
 
 
 def save_settings():
+    TGClient.DELAY = SETTINGS.get("delay")
     settings_db = main_db.table("settings")
     settings_db.truncate()
     settings_db.insert(SETTINGS)
@@ -99,9 +100,20 @@ async def login():
 
 @app.route('/settings', methods=['GET', 'POST'])
 async def change_settings():
+    session_name = session.get("current", {}).get("session_name")
     if request.method == "GET":
-        return await render_template("settings.html", settings=SETTINGS)
+        new_settings = {**{"session_name": session_name},
+                        **SETTINGS} if session_name else SETTINGS
+        return await render_template("settings.html", settings=new_settings)
     data = await request.get_json()
+    session_name = data.pop("session_name", None)
+    if session_name:
+        main_db.table("config").update(
+            {"session_name": session_name},
+            Query().phone == session["current"]["phone"])
+        session["current"]["session_name"] = session_name
+        client_store.get(phone=session["current"]["phone"]).session_name = session_name
+        session["config"] = client_store.toconfig()
     SETTINGS.update(data)
     save_settings()
     return {"success": True}
@@ -216,7 +228,7 @@ async def chooser_view():
     return await render_template("login.html", data=client.todict())
 
 
-@app.route("/delete/<int:id>",methods=["POST"])
+@app.route("/delete/<int:id>", methods=["POST"])
 async def delete_group_id(id):
     data = await request.get_json()
     if data.get("deleteAll"):
@@ -229,7 +241,7 @@ async def delete_group_id(id):
     return {"success": True, "message": group.name}
 
 
-@app.route("/delete", methods=["GET","POST"])
+@app.route("/delete", methods=["GET", "POST"])
 async def delete_group():
     if request.method == "GET":
         return await render_template("delete.html", groups=group_store.toconfig())
@@ -256,7 +268,7 @@ async def join_group():
     flag = await client.auth()
     if not flag:
         return {"success": False, "message": "Authentication Error Login Again"}
-    if link=="all":
+    if link == "all":
         links = main_db.table("join_groups").all()
         for link in links:
             try:
