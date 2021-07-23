@@ -115,33 +115,41 @@ class TGClient:
                 continue
         return len(self.groups) == len(self.groups_title)
 
-    async def scrap(self, index, exclude=None):
-        target_group = self.groups[index]
-        print(target_group)
-
-        all_participants = []
+    async def scrap(self, scrap_group_indexes, exclude_index=None):
+        scrap_group_indexes = list(set(scrap_group_indexes))
         exclude_participants = []
-        if exclude:
-            exclude_participants = await self.client.get_participants(self.groups[exclude], aggressive=True)
+        if exclude_index:
+            exclude_participants = await self.client.get_participants(self.groups[exclude_index], aggressive=True)
             exclude_participants = [user.id for user in exclude_participants]
+        if exclude_index in scrap_group_indexes:
+            scrap_group_indexes.remove(exclude_index)
+        member_count = 0
+        for index in scrap_group_indexes:
+            target_group = self.groups[index]
+            print(target_group)
 
-        all_participants = await self.client.get_participants(target_group, aggressive=True)
+            all_participants = []
 
-        group_data = dict(name=target_group.title, id=target_group.id,
-                          access_hash=target_group.access_hash)
-        final_data = []
-        for user in all_participants:
-            username = user.username or ""
-            first_name = user.first_name or ""
-            last_name = user.last_name or ""
-            name = (first_name + ' ' + last_name).strip()
-            if user.id not in exclude_participants:
-                final_data.append(
-                    dict(username=username, name=name, id=user.id, access_hash=user.access_hash))
-        group_data["members"] = [final_data]
-        group_hash = hashlib.md5(str(target_group.id).encode()).hexdigest()
-        save_group(group_hash+"-"+self.phone, group_data)
-        return group_data
+            all_participants = await self.client.get_participants(target_group, aggressive=True)
+
+            group_data = dict(name=target_group.title, id=target_group.id,
+                            access_hash=target_group.access_hash)
+            final_data = []
+            for user in all_participants:
+                username = user.username or ""
+                first_name = user.first_name or ""
+                last_name = user.last_name or ""
+                name = (first_name + ' ' + last_name).strip()
+                if user.id not in exclude_participants:
+                    final_data.append(
+                        dict(username=username, name=name, id=user.id, access_hash=user.access_hash))
+            group_data["members"] = [final_data]
+            group_hash = hashlib.md5(str(target_group.id).encode()).hexdigest()
+            save_group(group_hash+"-"+self.phone, group_data)
+            member_count+=len(final_data)
+            if index!=scrap_group_indexes[-1]:
+                await asyncio.sleep(3)
+        return member_count
 
     def terminate(self):
         self._run = False

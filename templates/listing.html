@@ -17,6 +17,11 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 	<title>Choose Group</title>
+	<style>
+		.row {
+			align-items: center;
+		}
+	</style>
 </head>
 
 <body>
@@ -24,17 +29,29 @@
 	<div class="container" style="text-align: center; margin: 0 auto; margin-top: 5rem;">
 		<h4>Choose Group</h4>
 		<form style="margin-top: 2rem;">
-			<select id="gName" style="display: block;" name="name" required>
-				<option disabled selected>Choose your option</option>
-				{% for gname in groups %}
-				<option value="{{ loop.index0 }}">{{ gname }}</option>
-				{% endfor %}
-			</select>
+			<div id="include-group-div">
+				<div class="row">
+					<div class="col">
+						<select id="gName" class="include-group" style="display: block;" name="name" required>
+							<option disabled selected>Choose your option</option>
+							{% for gname in groups %}
+							<option value="{{ loop.index0 }}">{{ gname }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<span>
+						<a class="waves-effect waves-light btn" onclick="add_select_box()"><i
+								class="material-icons">add</i></a>
+					</span>
+				</div>
+			</div>
+
 
 			<br>
 
 			<label>
-				<input type="checkbox" class="filled-in" id="excludeGroupCheck" onclick="excludeTrigger()" checked />
+				<input type="checkbox" class="filled-in" id="excludeGroupCheck" onclick="excludeTrigger()" checked
+					autocomplete="off" />
 				<span style="color: black;">Exclude Members:</span>
 			</label>
 			<br>
@@ -106,6 +123,29 @@
 
 		const bar = document.getElementById('progress-bar');
 
+		$("#include-group-div").on("click", "a.delete", function () {
+			$(this).closest("div").remove();
+		});
+
+		function add_select_box() {
+			let elem = `
+			<div class="row">
+					<div class="col">
+						<select class="include-group" style="display: block;" name="name" required>
+							<option disabled selected>Choose your option</option>
+							{% for gname in groups %}
+							<option value="{{ loop.index0 }}">{{ gname }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<span>
+						<a class="waves-effect waves-light btn delete"><i class="material-icons">delete</i></a>
+					</span>
+				</div>
+			`;
+			$("#include-group-div").append(elem);
+		}
+
 		function excludeTrigger() {
 
 			var excludeSelect = document.getElementById("gSelect");
@@ -118,97 +158,68 @@
 
 		}
 		function scrap() {
-			
+
 			bar.style.display = 'inline-block';
-			var e = document.getElementById('gName');
-			var ind = e.options[e.selectedIndex].value;
+			var include_group = document.getElementsByClassName("include-group");
+			let scrap_groups = [];
+			Array.from(include_group).forEach(
+				function (item) { scrap_groups.push(item.options[item.selectedIndex].value) });
 
 			var excludeSelect = document.getElementById("gSelect");
+			let postBody = { "index": scrap_groups };
 			if (document.getElementById("excludeGroupCheck").checked) {
 				var ex = document.getElementById('gSelect');
 				var indx = ex.options[ex.selectedIndex].value;
-
-				if (ind == indx) {
-					bar.style.display = "none";
-					M.toast({ html: 'ERROR!! The Scrap Group and Exclude Group Are Same.' });
-					return;
-				}
-				M.toast({ html: 'Started Scrapping Unique Members From ' + e.options[e.selectedIndex].text });
-
-				fetch("/scrap/" + String(ind)+"/"+String(indx), {
-					method: "GET"
-				})
-					.then(
-						(response) => {
-							if (response.ok) {
-								return response;
-							} else {
-								var error = new Error(
-									"Error " + response.status + ": " + response.statusText
-								);
-								error.response = response;
-								throw error;
-							}
-						},
-						(error) => {
-							var errmess = new Error(error.message);
-							throw errmess;
-						}
-					)
-					.then((response) => response.json())
-					.then((jres) => {
-						if (jres["success"])
-							M.toast({ html: jres["members"] + ' Members Scrapped Successfully !' });
-						else
-							M.toast({ html: 'Error Occurred !!' });
-						bar.style.display = "none";
-					})
-					.catch((error) => {
-						M.toast({ html: error });
-						bar.style.display = "none";
-					});
-
+				postBody = Object.assign(postBody, { "exclude_index": indx });
+				// if (ind == indx) {
+				// 	bar.style.display = "none";
+				// 	M.toast({ html: 'ERROR!! The Scrap Group and Exclude Group Are Same.' });
+				// 	return;
+				// }
+				M.toast({ html: 'Started Scrapping Unique Members From Selected Groups' });
 			}
 			else {
-				M.toast({ html: 'Started Scrapping ' + e.options[e.selectedIndex].text });
-
-				fetch("/scrap/" + String(ind), {
-					method: "GET"
-				})
-					.then(
-						(response) => {
-							if (response.ok) {
-								return response;
-							} else {
-								var error = new Error(
-									"Error " + response.status + ": " + response.statusText
-								);
-								error.response = response;
-								throw error;
-							}
-						},
-						(error) => {
-							var errmess = new Error(error.message);
-							throw errmess;
-						}
-					)
-					.then((response) => response.json())
-					.then((jres) => {
-						if (jres["success"])
-							M.toast({ html: jres["members"] + ' Members Scrapped Successfully !' });
-						else
-							M.toast({ html: 'Error Occurred !!' });
-						bar.style.display = "none";
-					})
-					.catch((error) => {
-						M.toast({ html: error });
-						bar.style.display = "none";
-					});
-
+				M.toast({ html: 'Started Scrapping !!' });
 			}
+			fetch("/scrap", {
+				method: "POST",
+				body: JSON.stringify(postBody),
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "same-origin",
+			})
+				.then(
+					(response) => {
+						if (response.ok) {
+							return response;
+						} else {
+							var error = new Error(
+								"Error " + response.status + ": " + response.statusText
+							);
+							error.response = response;
+							throw error;
+						}
+					},
+					(error) => {
+						var errmess = new Error(error.message);
+						throw errmess;
+					}
+				)
+				.then((response) => response.json())
+				.then((jres) => {
+					if (jres["success"])
+						M.toast({ html: jres["members"] + ' Members Scrapped Successfully !' });
+					else
+						M.toast({ html: 'Error Occurred !!' });
+					bar.style.display = "none";
+				})
+				.catch((error) => {
+					M.toast({ html: error });
+					bar.style.display = "none";
+				});
 
 		}
-
 	</script>
 </body>
 

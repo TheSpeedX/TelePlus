@@ -147,24 +147,34 @@ async def change_number(api_id):
     return session["current"]
 
 
-@app.route("/scrap/<int:index>")
-async def scrap_group(index):
+@app.route("/scrap", methods=["POST"])
+async def scrap_group():
+    data = await request.get_json()
+    scrap_group_indexes = data.get("index",[])
+    exclude_index = data.get("exclude_index")
+    scrap_group_indexes = list(map(int,scrap_group_indexes))
+    logging.debug("SCRAP: "+str(scrap_group_indexes))
+    logging.debug("EXCLUDE: "+str(exclude_index))
     client = client_store.get(phone=session["current"]["phone"])
-    if index < len(client.groups):
-        data = await client.scrap(index)
+    if all(index < len(client.groups) for index in scrap_group_indexes):
+        if exclude_index:
+            exclude_index = int(exclude_index)
+            member_count = await client.scrap(scrap_group_indexes,exclude_index=exclude_index)
+        else:
+            member_count = await client.scrap(scrap_group_indexes)
         group_store.load(client.phone)
-        return {"success": True, "members": len(data["members"][0])}
+        return {"success": True, "members": member_count}
     return {"success": False}
 
 
-@app.route("/scrap/<int:index>/<int:exindex>")
-async def scrap_group_exclude(index, exindex):
-    client = client_store.get(phone=session["current"]["phone"])
-    if index < len(client.groups):
-        data = await client.scrap(index, exclude=exindex)
-        group_store.load(client.phone)
-        return {"success": True, "members": len(data["members"][0])}
-    return {"success": False}
+# @app.route("/scrap/<int:index>/<int:exindex>", methods=["POST"])
+# async def scrap_group_exclude(index, exindex):
+#     client = client_store.get(phone=session["current"]["phone"])
+#     if index < len(client.groups):
+#         data = await client.scrap(index, exclude=exindex)
+#         group_store.load(client.phone)
+#         return {"success": True, "members": len(data["members"][0])}
+#     return {"success": False}
 
 
 @app.route("/split/<int:id>", methods=["POST"])
