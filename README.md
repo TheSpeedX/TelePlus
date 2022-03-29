@@ -1,7 +1,7 @@
-# Telegram Member Adder v2
+# TelePlus v2
 
 <p align='center'>
-Powerful Telegram Members Scrapper and Adder
+Powerful Telegram Members Scrapper, Adder, Joiner and More..
 </p>
 
 ## Features
