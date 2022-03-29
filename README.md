@@ -20,10 +20,10 @@ Powerful Telegram Members Scrapper, Adder, Joiner and More..
 
 ## How to use
 
-* Install Requirements
-
+* Install Requirements  
 `pip install -r requirements.txt`
 
-* Add your accounts to add and scrape members
-
-`python app.py`
+* Start TelePlus  
+Run:  
+`python app.py`  
+And Head Over to http://127.0.0.1:5000
